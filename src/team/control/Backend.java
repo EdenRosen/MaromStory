@@ -5,20 +5,21 @@ import my_base.App;
 import shared.ui_ports.UiPort;
 import team.model.Canvas;
 import team.model.Enemy;
+import team.model.HeroType;
 import team.model.MainPlayer;
 import team.model.Sword;
 
 public class Backend {
 
-    private boolean gameStarted = false;
+    private GameState state = GameState.START_SCREEN;
 
     private UiPort uiPort() {
         return UiPort.getInstance();
     }
 
-    public boolean isGameStarted() {
-        return gameStarted;
-    }
+    public GameState getState()    { return state; }
+    public boolean isGameStarted() { return state != GameState.START_SCREEN; }
+    public boolean isGameOver()    { return state == GameState.GAME_OVER; }
 
     // --- אתחול ---
 
@@ -30,16 +31,21 @@ public class Backend {
         uiPort().log("App initialized — waiting for player to press Enter");
     }
 
-    // נקרא כשהשחקן לוחץ Enter — מתחיל את המשחק בפועל
+    // נקרא כשהשחקן לוחץ Enter
+    //   ממסך פתיחה  → מתחיל משחק
+    //   מ-Game Over → מאתחל ומתחיל מחדש
+    //   תוך כדי משחק → מתעלם
     public void startScenario() {
-        if (gameStarted) return;
+        if (state == GameState.GAME_OVER) { resetScenario(); return; }
+        if (state == GameState.PLAYING) return;
+
         Canvas canvas = App.content().canvas();
 
         uiPort().addImage(99, "resources/canvaBackround.jpg", 0, 0, 1200, 800, 0, true);
         uiPort().setMap(canvas.getMap());
         uiPort().setMainPlayer(canvas.getMainPlayer());
 
-        gameStarted = true;
+        state = GameState.PLAYING;
 
         // שלב 4 בתרשים רצף — Game System מודיע ל-UI לצייר את מצב הפתיחה
         uiPort().renderInitials();
@@ -47,11 +53,26 @@ public class Backend {
         uiPort().log("Scenario started: MapleQuest");
     }
 
+    // בחירת גיבור — פעיל רק במסך הפתיחה. מחליף את הסוג ובונה מחדש כדי
+    // שמסך הפתיחה יציג את הגיבור הנבחר ואת הסקילים שלו.
+    public void cycleHero() {
+        if (state != GameState.START_SCREEN) return;
+        Canvas canvas = App.content().canvas();
+        HeroType[] all = HeroType.values();
+        HeroType next = all[(canvas.getSelectedHero().ordinal() + 1) % all.length];
+        canvas.setSelectedHero(next);
+        canvas.initCanvas();
+        uiPort().setMap(canvas.getMap());
+        uiPort().setMainPlayer(canvas.getMainPlayer());
+        uiPort().log("Hero selected: " + next);
+    }
+
     public void resetScenario() {
         Canvas canvas = App.content().canvas();
         canvas.initCanvas();
         uiPort().setMap(canvas.getMap());
         uiPort().setMainPlayer(canvas.getMainPlayer());
+        state = GameState.PLAYING;
         uiPort().log("Scenario reset");
     }
 
@@ -132,14 +153,22 @@ public class Backend {
     // --- עדכון תקופתי (נקרא מ-MyPeriodicLoop כל tick) ---
 
     public void updatePlayer() {
+        // קופא במסך הפתיחה וב-Game Over — אין פיזיקה / AI
+        if (state != GameState.PLAYING) return;
+
         Canvas canvas = App.content().canvas();
         MainPlayer player = canvas.getMainPlayer();
         player.update(canvas.getMap().getRectangles());
         player.updateAttackAnimation();
         updateEnemies(canvas);
-        uiPort().updatePlayerPosition(player.getX(), player.getY());
 
-        // עדכון כל האויבים — פיזיקה
+        // US-2 — מות השחקן מעביר את המערכת ל-Game Over
+        if (player.getStats().isDead()) {
+            state = GameState.GAME_OVER;
+            uiPort().log("Game Over");
+        }
+
+        uiPort().updatePlayerPosition(player.getX(), player.getY());
     }
 
     private void updateEnemies(Canvas canvas) {
@@ -150,6 +179,13 @@ public class Backend {
             Enemy enemy = iterator.next();
             enemy.updateAi(player);
             enemy.update(platforms);
+            enemy.updateCooldown();
+
+            // US-1 — אויב בטווח מכה את השחקן (עם cooldown בין מכות)
+            if (enemy.canAttack(player, Enemy.ATTACK_RANGE)) {
+                enemy.attackPlayer(player);
+            }
+
             enemy.updateDeathAnimation();
             if (enemy.shouldDisappear()) {
                 iterator.remove();

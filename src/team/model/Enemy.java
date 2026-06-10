@@ -3,9 +3,12 @@ package team.model;
 public class Enemy extends Character {
 
     public static final int DEATH_ANIMATION_TICKS = 18;
-    
+    public static final double ATTACK_RANGE = 55;          // טווח מגע לתקיפת השחקן
+    public static final int ATTACK_COOLDOWN_TICKS = 30;    // ~0.9 שניות בין מכה למכה
+
     private String type;
     private int deathAnimationTicks = 0;
+    private int attackCooldown = 0;
 
     public Enemy(int id, double x, double y, String type) {
         super(id, x, y, new PlayerStats(80, 30, 8, 3));
@@ -29,15 +32,21 @@ public class Enemy extends Character {
     }
 
     public boolean canAttack(MainPlayer player, double range) {
+        if (isDying() || attackCooldown > 0) return false;   // לא תוקף בזמן cooldown / גסיסה
         double dist = Math.sqrt(Math.pow(x - player.getX(), 2) +
                                 Math.pow(y - player.getY(), 2));
         return dist <= range;
     }
 
-    // תוקף את השחקן — מוריד חיים לפי הכוח
+    // תוקף את השחקן — מוריד חיים לפי הכוח, ומפעיל cooldown
     public void attackPlayer(MainPlayer player) {
         double damage = stats.getStrength();
         player.getStats().takeDamage(damage);
+        attackCooldown = ATTACK_COOLDOWN_TICKS;
+    }
+
+    public void updateCooldown() {
+        if (attackCooldown > 0) attackCooldown--;
     }
 
     public void takeDamage(double damage) {

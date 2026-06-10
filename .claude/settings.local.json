@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(python -c \"import pdfplumber; pdf = pdfplumber.open\\('C:/Users/agamy/Downloads/Agile.pdf'\\); [print\\(f'Page {i+1}:', p.extract_text\\(\\)[:1500] if p.extract_text\\(\\) else 'EMPTY'\\) for i,p in enumerate\\(pdf.pages[:15]\\)]\")"
+    ]
+  }
+}

@@ -10,6 +10,12 @@ public class Canvas {
     private Sword sword;
     private List<Enemy> enemies;
 
+    // הגיבור הנבחר — נשמר בין אתחולים (reset) ונקבע במסך הפתיחה
+    private HeroType selectedHero = HeroType.WARRIOR;
+
+    public HeroType getSelectedHero()          { return selectedHero; }
+    public void setSelectedHero(HeroType hero)  { this.selectedHero = hero; }
+
     public void initCanvas() {
         map = new Map(0);
         map.addRectangle(new MapRect(0, 0,   500, 1200, 60));
@@ -18,7 +24,11 @@ public class Canvas {
         map.addRectangle(new MapRect(0, 400, 400, 80,   40));
 
         mainPlayer = new MainPlayer(0, 150, 150);
-        mainPlayer.addAttack(new SlashAttack()); // index 1
+        // סקיל שני (index 1) נקבע לפי הגיבור הנבחר
+        switch (selectedHero) {
+            case WARRIOR: mainPlayer.addAttack(new SlashAttack());    break;
+            case MAGE:    mainPlayer.addAttack(new FireballAttack()); break;
+        }
 
         sword = new Sword("Iron Sword", 10, 300, 450);
 

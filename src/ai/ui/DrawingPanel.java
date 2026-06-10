@@ -9,6 +9,7 @@ import javax.swing.*;
 import my_base.App;
 import shared.MainRouter;
 import shared.ui_ports.UiPort;
+import team.model.HeroType;
 import team.model.MapRect;
 
 public class DrawingPanel extends JPanel {
@@ -17,6 +18,7 @@ public class DrawingPanel extends JPanel {
     private static final Image ENEMY_HENRY1 = ImageElement.loadImage("resources/EnemyHenry1.png");
     private static final Image ENEMY_HENRY2 = ImageElement.loadImage("resources/EnemyHenry2.png");
     private static final Image ENEMY_HENRY3 = ImageElement.loadImage("resources/EnemyHenry3.png");
+    private static final Image MAGE_IMAGE   = ImageElement.loadImage("resources/Mage.png");
 
     private Map<String, ImageElement> images;
     private MainRouter mainRouter;
@@ -32,6 +34,7 @@ public class DrawingPanel extends JPanel {
         this.mainRouter  = mainRouter;
 
         setFocusable(true);
+        setFocusTraversalKeysEnabled(false); // כדי ש-TAB יגיע ל-KeyListener (בחירת דמות)
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -69,6 +72,7 @@ public class DrawingPanel extends JPanel {
             case KeyEvent.VK_C:      return "attack";
             case KeyEvent.VK_1:      return "skill1";
             case KeyEvent.VK_2:      return "skill2";
+            case KeyEvent.VK_TAB:    return "selectHero";
             case KeyEvent.VK_ENTER:  return "start";
             default: return null;
         }
@@ -94,39 +98,175 @@ public class DrawingPanel extends JPanel {
         renderAttackAnimation(g);
         renderPlayerStats(g);
         renderActiveSkillHUD(g);
+
+        // US-2 — מסך Game Over מעל העולם הקפוא
+        if (App.content().backend().isGameOver()) {
+            renderGameOver(g);
+        }
+    }
+
+    private void renderGameOver(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // שכבת כהות חצי-שקופה מעל המשחק
+        g2d.setColor(new Color(0, 0, 0, 175));
+        g2d.fillRect(0, 0, getWidth(), getHeight());
+
+        // כותרת GAME OVER
+        g2d.setFont(new Font("Arial", Font.BOLD, 72));
+        g2d.setColor(new Color(220, 50, 50));
+        String title = "GAME OVER";
+        FontMetrics fm = g2d.getFontMetrics();
+        int tx = (getWidth() - fm.stringWidth(title)) / 2;
+        g2d.drawString(title, tx, getHeight() / 2 - 30);
+
+        // הוראת אתחול
+        g2d.setFont(new Font("Arial", Font.PLAIN, 24));
+        g2d.setColor(new Color(220, 220, 220));
+        String prompt = "Press ENTER or Reset to play again";
+        fm = g2d.getFontMetrics();
+        int px = (getWidth() - fm.stringWidth(prompt)) / 2;
+        g2d.drawString(prompt, px, getHeight() / 2 + 30);
+    }
+
+    // ---------- מסך פתיחה / בחירת דמות ----------
+
+    private HeroType selectedHero() {
+        return App.content().canvas().getSelectedHero();
+    }
+
+    private String heroName(HeroType h)  { return h == HeroType.MAGE ? "MAGE" : "WARRIOR"; }
+    private String heroRole(HeroType h)  { return h == HeroType.MAGE ? "Ranged Spellcaster" : "Melee Fighter"; }
+    private Image  heroImage(HeroType h) { return h == HeroType.MAGE ? MAGE_IMAGE : PLAYER_IMAGE; }
+    private Color  heroAccent(HeroType h){ return h == HeroType.MAGE ? new Color(150, 120, 255) : new Color(255, 165, 60); }
+    private String[] heroSkills(HeroType h) {
+        return h == HeroType.MAGE
+            ? new String[]{ "1  Basic Attack", "2  Fireball  (ranged magic)" }
+            : new String[]{ "1  Basic Attack", "2  Slash  (needs a sword)" };
     }
 
     private void renderStartScreen(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-        // רקע כהה
-        g2d.setColor(new Color(15, 10, 30));
-        g2d.fillRect(0, 0, getWidth(), getHeight());
+        int w = getWidth(), h = getHeight();
 
-        // כותרת
-        g2d.setFont(new Font("Arial", Font.BOLD, 64));
-        g2d.setColor(new Color(255, 210, 50));
+        // רקע — גרדיאנט אנכי + נצנוצי כוכבים
+        g2d.setPaint(new GradientPaint(0, 0, new Color(18, 12, 34), 0, h, new Color(36, 24, 64)));
+        g2d.fillRect(0, 0, w, h);
+        g2d.setColor(new Color(255, 255, 255, 22));
+        for (int i = 0; i < 70; i++) {
+            int sx = (i * 97 + 13) % w;
+            int sy = (i * 53 + 29) % (h / 2);
+            int s = (i % 3 == 0) ? 2 : 1;
+            g2d.fillOval(sx, sy, s, s);
+        }
+
+        // כותרת עם הילה
+        g2d.setFont(new Font("Arial", Font.BOLD, 60));
         String title = "MaromQuest";
         FontMetrics fm = g2d.getFontMetrics();
-        int tx = (getWidth() - fm.stringWidth(title)) / 2;
-        g2d.drawString(title, tx, getHeight() / 2 - 60);
+        int tx = (w - fm.stringWidth(title)) / 2;
+        int ty = 110;
+        g2d.setColor(new Color(255, 180, 40, 60));
+        g2d.drawString(title, tx + 2, ty + 2);
+        g2d.setColor(new Color(255, 212, 64));
+        g2d.drawString(title, tx, ty);
 
-        // כיתוב Press Enter
-        g2d.setFont(new Font("Arial", Font.PLAIN, 26));
-        g2d.setColor(new Color(200, 200, 200));
-        String prompt = "Press ENTER to Start";
-        fm = g2d.getFontMetrics();
-        int px = (getWidth() - fm.stringWidth(prompt)) / 2;
-        g2d.drawString(prompt, px, getHeight() / 2 + 20);
+        g2d.setFont(new Font("Arial", Font.PLAIN, 22));
+        g2d.setColor(new Color(200, 195, 220));
+        String sub = "Choose your hero";
+        g2d.drawString(sub, (w - g2d.getFontMetrics().stringWidth(sub)) / 2, ty + 40);
 
-        // הוראות
-        g2d.setFont(new Font("Arial", Font.PLAIN, 16));
-        g2d.setColor(new Color(140, 140, 160));
-        String controls = "Arrow Keys: Move   |   Up: Jump   |   Z: Pickup   |   C: Attack   |   1/2: Switch Skill";
-        fm = g2d.getFontMetrics();
-        int cx = (getWidth() - fm.stringWidth(controls)) / 2;
-        g2d.drawString(controls, cx, getHeight() / 2 + 70);
+        // שני כרטיסים
+        HeroType[] heroes = HeroType.values();
+        int cardW = 230, cardH = 310, gap = 50;
+        int totalW = heroes.length * cardW + (heroes.length - 1) * gap;
+        int startX = (w - totalW) / 2;
+        int cardY = ty + 75;
+
+        for (int i = 0; i < heroes.length; i++) {
+            int cx = startX + i * (cardW + gap);
+            renderHeroCard(g2d, heroes[i], cx, cardY, cardW, cardH, heroes[i] == selectedHero());
+        }
+
+        // כיתובי הוראות
+        int footY = cardY + cardH + 55;
+        g2d.setFont(new Font("Arial", Font.BOLD, 22));
+        String go = "ENTER  —  Start            TAB  —  Switch Hero";
+        g2d.setColor(new Color(255, 224, 120));
+        g2d.drawString(go, (w - g2d.getFontMetrics().stringWidth(go)) / 2, footY);
+
+        g2d.setFont(new Font("Arial", Font.PLAIN, 15));
+        g2d.setColor(new Color(150, 145, 170));
+        String controls = "Arrows: Move    Up: Jump    Z: Pickup    X: Throw    C: Attack    1/2: Switch Skill";
+        g2d.drawString(controls, (w - g2d.getFontMetrics().stringWidth(controls)) / 2, footY + 30);
+    }
+
+    private void renderHeroCard(Graphics2D g2d, HeroType hero, int x, int y, int cw, int ch, boolean selected) {
+        Color accent = heroAccent(hero);
+
+        // הילה לכרטיס הנבחר
+        if (selected) {
+            for (int r = 14; r > 0; r -= 2) {
+                g2d.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 10));
+                g2d.fillRoundRect(x - r, y - r, cw + 2 * r, ch + 2 * r, 26 + r, 26 + r);
+            }
+        }
+
+        // גוף הכרטיס
+        g2d.setColor(selected ? new Color(44, 36, 74) : new Color(28, 22, 46));
+        g2d.fillRoundRect(x, y, cw, ch, 22, 22);
+        g2d.setStroke(new BasicStroke(selected ? 3.5f : 1.5f));
+        g2d.setColor(selected ? accent : new Color(80, 72, 110));
+        g2d.drawRoundRect(x, y, cw, ch, 22, 22);
+
+        // שם
+        g2d.setFont(new Font("Arial", Font.BOLD, 28));
+        g2d.setColor(selected ? Color.WHITE : new Color(170, 162, 195));
+        FontMetrics fm = g2d.getFontMetrics();
+        g2d.drawString(heroName(hero), x + (cw - fm.stringWidth(heroName(hero))) / 2, y + 38);
+
+        // תפקיד
+        g2d.setFont(new Font("Arial", Font.ITALIC, 15));
+        g2d.setColor(accent);
+        String role = heroRole(hero);
+        g2d.drawString(role, x + (cw - g2d.getFontMetrics().stringWidth(role)) / 2, y + 60);
+
+        // ספרייט
+        Image sprite = heroImage(hero);
+        if (isImageLoaded(sprite)) {
+            drawImageFit(g2d, sprite, x + cw / 2 - 55, y + 72, 110, 130, false);
+        }
+
+        // קו מפריד
+        g2d.setColor(new Color(255, 255, 255, 30));
+        g2d.drawLine(x + 24, y + 212, x + cw - 24, y + 212);
+
+        // סקילים
+        g2d.setFont(new Font("Arial", Font.PLAIN, 15));
+        String[] skills = heroSkills(hero);
+        for (int i = 0; i < skills.length; i++) {
+            g2d.setColor(selected ? new Color(225, 222, 235) : new Color(150, 145, 170));
+            g2d.drawString(skills[i], x + 24, y + 240 + i * 24);
+        }
+
+        // תג "SELECTED"
+        if (selected) {
+            g2d.setFont(new Font("Arial", Font.BOLD, 13));
+            String tag = "SELECTED";
+            int tw = g2d.getFontMetrics().stringWidth(tag);
+            int pillW = tw + 38, pillX = x + (cw - pillW) / 2, pillY = y + ch - 30;
+            g2d.setColor(accent);
+            g2d.fillRoundRect(pillX, pillY, pillW, 22, 11, 11);
+            // משולש קטן במקום תו יוניקוד
+            g2d.setColor(new Color(20, 16, 34));
+            int ax = pillX + 12, ay = pillY + 11;
+            g2d.fillPolygon(new int[]{ax, ax + 7, ax}, new int[]{ay - 5, ay, ay + 5}, 3);
+            g2d.drawString(tag, pillX + 22, y + ch - 14);
+        }
     }
 
     private void renderBackground(Graphics g) {
@@ -347,9 +487,49 @@ public class DrawingPanel extends JPanel {
         String anim = player.getCurrentAnimation();
         if ("Slash Attack".equals(anim)) {
             renderSlashAnimation(g, player);
+        } else if ("Fireball".equals(anim)) {
+            renderFireballAnimation(g, player);
         } else {
             renderBasicAttackAnimation(g, player);
         }
+    }
+
+    // אנימציית כדור-אש — כדור זוהר שטס קדימה עם זנב להבה
+    private void renderFireballAnimation(Graphics g, team.model.MainPlayer player) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int ticks    = player.getAttackAnimationTicks();
+        int maxTicks = team.model.MainPlayer.ATTACK_ANIMATION_TICKS;
+        float progress = 1.0f - (float) ticks / maxTicks;   // 0→1 ככל שהאנימציה מתקדמת
+
+        boolean right = player.isFacingRight();
+        int dir   = right ? 1 : -1;
+        int startX = (int) player.getX() + (right ? 42 : 8);
+        int y      = (int) player.getY() + 18;
+        int travel = 160;
+        int cx = startX + (int) (dir * progress * travel);
+
+        // זנב להבה (כדורים דועכים לאחור)
+        for (int i = 5; i >= 1; i--) {
+            int tx = cx - dir * i * 11;
+            int r  = Math.max(2, 15 - i * 2);
+            int a  = Math.max(0, 150 - i * 26);
+            g2d.setColor(new Color(255, 110 + i * 8, 28, a));
+            g2d.fillOval(tx - r, y - r, r * 2, r * 2);
+        }
+
+        // הילה חיצונית
+        g2d.setColor(new Color(255, 120, 30, 150));
+        g2d.fillOval(cx - 17, y - 17, 34, 34);
+        // טבעת אש
+        g2d.setColor(new Color(255, 80, 20, 200));
+        g2d.fillOval(cx - 13, y - 13, 26, 26);
+        // ליבה לוהטת
+        g2d.setColor(new Color(255, 232, 150));
+        g2d.fillOval(cx - 7, y - 7, 14, 14);
+        g2d.setColor(Color.WHITE);
+        g2d.fillOval(cx - 3, y - 3, 6, 6);
     }
 
     private void renderBasicAttackAnimation(Graphics g, team.model.MainPlayer player) {
@@ -428,10 +608,10 @@ public class DrawingPanel extends JPanel {
 
         Graphics2D g2d = (Graphics2D) g;
         String skillName = player.getActiveAttackName();
-        boolean isSlash  = "Slash Attack".equals(skillName);
+        Color theme = skillColor(skillName);
 
         // מיקום: פינה ימנית למטה
-        int boxW = 130, boxH = 50;
+        int boxW = 140, boxH = 50;
         int boxX = getWidth() - boxW - 15;
         int boxY = getHeight() - boxH - 15;
 
@@ -440,7 +620,7 @@ public class DrawingPanel extends JPanel {
         g2d.fillRoundRect(boxX, boxY, boxW, boxH, 10, 10);
 
         // מסגרת צבעונית לפי skill
-        g2d.setColor(isSlash ? new Color(180, 100, 255) : new Color(80, 180, 255));
+        g2d.setColor(theme);
         g2d.setStroke(new BasicStroke(2));
         g2d.drawRoundRect(boxX, boxY, boxW, boxH, 10, 10);
 
@@ -450,8 +630,15 @@ public class DrawingPanel extends JPanel {
         g2d.drawString("Active Skill [1/2]:", boxX + 8, boxY + 17);
 
         g2d.setFont(new Font("Arial", Font.BOLD, 14));
-        g2d.setColor(isSlash ? new Color(210, 150, 255) : new Color(130, 210, 255));
+        g2d.setColor(theme.brighter());
         g2d.drawString(skillName, boxX + 8, boxY + 38);
+    }
+
+    // צבע נושא לכל סקיל — Slash סגול, Fireball כתום, Basic כחול
+    private Color skillColor(String skillName) {
+        if ("Slash Attack".equals(skillName)) return new Color(180, 100, 255);
+        if ("Fireball".equals(skillName))     return new Color(255, 140, 50);
+        return new Color(80, 180, 255);
     }
 
     private void renderMainPlayer(Graphics g) {
@@ -459,8 +646,9 @@ public class DrawingPanel extends JPanel {
         if (player == null) return;
 
         Graphics2D g2d = (Graphics2D) g;
-        if (!isImageLoaded(PLAYER_IMAGE)) return;
-        Image playerImage = PLAYER_IMAGE;
+        Image playerImage = heroImage(selectedHero());
+        if (!isImageLoaded(playerImage)) playerImage = PLAYER_IMAGE;
+        if (!isImageLoaded(playerImage)) return;
 
         int px = (int) player.getX();
         int py = (int) player.getY();
