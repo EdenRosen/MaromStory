@@ -9,7 +9,6 @@ public class Canvas {
     private MainPlayer mainPlayer;
     private Sword sword;
     private List<Enemy> enemies;
-    private int nextEnemyId = 100;   // מזהים ייחודיים ל-spawn דינמי (spot)
 
     // הגיבור הנבחר — נשמר בין אתחולים (reset) ונקבע במסך הפתיחה
     private HeroType selectedHero = HeroType.WARRIOR;
@@ -50,13 +49,5 @@ public class Canvas {
         enemies.add(enemy);
         return enemy;
     }
-
-    // מוסיפה 5 מפלצות מאותו סוג באותו אזור (פרושות מעט אופקית כדי שלא יחפפו).
-    public void spot(EnemyType type, double x, double y) {
-        final int COUNT   = 5;
-        final int SPACING = 60;
-        for (int i = 0; i < COUNT; i++) {
-            spawnEnemy(nextEnemyId++, x + i * SPACING, y, type);
-        }
-    }
+    
 }
