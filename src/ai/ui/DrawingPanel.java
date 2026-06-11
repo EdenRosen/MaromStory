@@ -9,6 +9,7 @@ import javax.swing.*;
 import my_base.App;
 import shared.MainRouter;
 import shared.ui_ports.UiPort;
+import team.model.EnemyType;
 import team.model.HeroType;
 import team.model.MapRect;
 
@@ -394,11 +395,13 @@ public class DrawingPanel extends JPanel {
         g2d.drawString("[Z]", sx + 5, sy - 4);
     }
 
-    private Image getEnemyImage(String type) {
-        if ("Henry1".equals(type)) return ENEMY_HENRY1;
-        if ("Henry2".equals(type)) return ENEMY_HENRY2;
-        if ("Henry3".equals(type)) return ENEMY_HENRY3;
-        return ENEMY_HENRY1;
+    private Image getEnemyImage(EnemyType type) {
+        switch (type) {
+            case SWIFT_HENRY: return ENEMY_HENRY1;
+            case EVIL_HENRY:  return ENEMY_HENRY2;
+            case GIANT_HENRY: return ENEMY_HENRY3;
+            default:          return ENEMY_HENRY1;
+        }
     }
 
     private void renderEnemies(Graphics g) {
@@ -418,7 +421,7 @@ public class DrawingPanel extends JPanel {
             int ey = (int) enemy.getY();
             int ew = 70, eh = 82, eyOff = 32;
 
-            if ("Henry3".equals(enemy.getType())) {
+            if (enemy.getType() == EnemyType.GIANT_HENRY) {
                 ew = 110; eh = 130; eyOff = 80;
             }
 
@@ -721,8 +724,9 @@ public class DrawingPanel extends JPanel {
 
         team.model.PlayerStats stats = player.getStats();
         Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int panelX = 10, panelY = 10, panelW = 160, panelH = 110;
+        int panelX = 10, panelY = 10, panelW = 190, panelH = 168;
 
         g2d.setColor(new Color(0, 0, 0, 150));
         g2d.fillRoundRect(panelX, panelY, panelW, panelH, 12, 12);
@@ -730,15 +734,55 @@ public class DrawingPanel extends JPanel {
         g2d.setFont(new Font("Arial", Font.BOLD, 13));
 
         g2d.setColor(new Color(220, 60, 60));
-        g2d.drawString("HP:  " + (int) stats.getHealth() + " / " + (int) stats.getMaxHealth(), panelX + 10, panelY + 25);
+        g2d.drawString("HP:  " + (int) stats.getHealth() + " / " + (int) stats.getMaxHealth(), panelX + 10, panelY + 24);
 
         g2d.setColor(new Color(60, 140, 220));
-        g2d.drawString("MP:  " + (int) stats.getEnergy() + " / " + (int) stats.getMaxEnergy(), panelX + 10, panelY + 48);
+        g2d.drawString("MP:  " + (int) stats.getEnergy() + " / " + (int) stats.getMaxEnergy(), panelX + 10, panelY + 45);
 
         g2d.setColor(new Color(230, 140, 30));
-        g2d.drawString("STR: " + (int) stats.getStrength(), panelX + 10, panelY + 71);
+        g2d.drawString("STR: " + (int) stats.getStrength(), panelX + 10, panelY + 66);
 
         g2d.setColor(new Color(60, 200, 80));
-        g2d.drawString("AGI: " + (int) stats.getAgility(), panelX + 10, panelY + 94);
+        g2d.drawString("AGI: " + (int) stats.getAgility(), panelX + 10, panelY + 87);
+
+        // קו מפריד
+        g2d.setColor(new Color(255, 255, 255, 40));
+        g2d.drawLine(panelX + 10, panelY + 98, panelX + panelW - 10, panelY + 98);
+
+        // רמה + מטבעות
+        team.model.PlayerProgress prog = player.getProgress();
+
+        g2d.setFont(new Font("Arial", Font.BOLD, 15));
+        g2d.setColor(new Color(180, 150, 255));
+        g2d.drawString("LV " + prog.getLevel(), panelX + 10, panelY + 122);
+
+        // אייקון מטבע + ספירה (צד ימין)
+        int coinX = panelX + panelW - 78, coinY = panelY + 110;
+        g2d.setColor(new Color(170, 130, 20));
+        g2d.fillOval(coinX, coinY, 16, 16);
+        g2d.setColor(new Color(255, 215, 60));
+        g2d.fillOval(coinX + 2, coinY + 2, 12, 12);
+        g2d.setColor(new Color(150, 110, 10));
+        g2d.setFont(new Font("Arial", Font.BOLD, 11));
+        g2d.drawString("$", coinX + 5, coinY + 12);
+        g2d.setColor(new Color(255, 220, 90));
+        g2d.setFont(new Font("Arial", Font.BOLD, 15));
+        g2d.drawString(String.valueOf(prog.getCoins()), coinX + 22, panelY + 123);
+
+        // מד XP
+        int barX = panelX + 10, barY = panelY + 134, barW = panelW - 20, barH = 14;
+        g2d.setColor(new Color(38, 38, 50));
+        g2d.fillRoundRect(barX, barY, barW, barH, 7, 7);
+        int fill = (int) (barW * Math.min(1.0, prog.getXp() / (double) prog.getXpToNext()));
+        g2d.setColor(new Color(150, 120, 255));
+        g2d.fillRoundRect(barX, barY, fill, barH, 7, 7);
+        g2d.setColor(new Color(255, 255, 255, 90));
+        g2d.drawRoundRect(barX, barY, barW, barH, 7, 7);
+
+        String xpText = "XP  " + prog.getXp() + " / " + prog.getXpToNext();
+        g2d.setFont(new Font("Arial", Font.BOLD, 10));
+        FontMetrics fm = g2d.getFontMetrics();
+        g2d.setColor(Color.WHITE);
+        g2d.drawString(xpText, barX + (barW - fm.stringWidth(xpText)) / 2, barY + 11);
     }
 }

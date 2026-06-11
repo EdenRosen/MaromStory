@@ -12,11 +12,14 @@ public class MainPlayer extends Character {
 
     private int attackAnimationTicks = 0;
     private String currentAnimation = "";
-   
+
+    private final PlayerProgress progress = new PlayerProgress();
 
     public MainPlayer(int id, double x, double y) {
         super(id, x, y, new PlayerStats(100, 50, 10, 5));
     }
+
+    public PlayerProgress getProgress() { return progress; }
 
     // --- תנועה --- עם עדכון כיוון
 

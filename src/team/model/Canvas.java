@@ -9,6 +9,7 @@ public class Canvas {
     private MainPlayer mainPlayer;
     private Sword sword;
     private List<Enemy> enemies;
+    private int nextEnemyId = 100;   // מזהים ייחודיים ל-spawn דינמי (spot)
 
     // הגיבור הנבחר — נשמר בין אתחולים (reset) ונקבע במסך הפתיחה
     private HeroType selectedHero = HeroType.WARRIOR;
@@ -33,13 +34,29 @@ public class Canvas {
         sword = new Sword("Iron Sword", 10, 300, 450);
 
         enemies = new ArrayList<>();
-        enemies.add(new Enemy(1, 700, 430, "Henry1"));
-        enemies.add(new Enemy(2, 900, 430, "Henry2"));
-        enemies.add(new Enemy(3, 600, 430, "Henry3"));
+        spawnEnemy(1, 700, 430, EnemyType.SWIFT_HENRY);
+        spawnEnemy(2, 900, 430, EnemyType.EVIL_HENRY);
+        spawnEnemy(3, 600, 430, EnemyType.GIANT_HENRY);
     }
 
     public Map getMap()               { return map; }
     public MainPlayer getMainPlayer() { return mainPlayer; }
     public Sword getSword()           { return sword; }
     public List<Enemy> getEnemies()   { return enemies; }
+
+    // יצירת אויב מסוג נתון והוספתו לעולם — נקודה אחת לכל spawn
+    public Enemy spawnEnemy(int id, double x, double y, EnemyType type) {
+        Enemy enemy = new Enemy(id, x, y, type);
+        enemies.add(enemy);
+        return enemy;
+    }
+
+    // מוסיפה 5 מפלצות מאותו סוג באותו אזור (פרושות מעט אופקית כדי שלא יחפפו).
+    public void spot(EnemyType type, double x, double y) {
+        final int COUNT   = 5;
+        final int SPACING = 60;
+        for (int i = 0; i < COUNT; i++) {
+            spawnEnemy(nextEnemyId++, x + i * SPACING, y, type);
+        }
+    }
 }

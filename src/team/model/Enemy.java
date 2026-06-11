@@ -6,12 +6,12 @@ public class Enemy extends Character {
     public static final double ATTACK_RANGE = 55;          // טווח מגע לתקיפת השחקן
     public static final int ATTACK_COOLDOWN_TICKS = 30;    // ~0.9 שניות בין מכה למכה
 
-    private String type;
+    private final EnemyType type;
     private int deathAnimationTicks = 0;
     private int attackCooldown = 0;
 
-    public Enemy(int id, double x, double y, String type) {
-        super(id, x, y, new PlayerStats(80, 30, 8, 3));
+    public Enemy(int id, double x, double y, EnemyType type) {
+        super(id, x, y, new PlayerStats(type.maxHealth, type.maxEnergy, type.strength, type.agility));
         this.type = type;
     }
     
@@ -22,9 +22,8 @@ public class Enemy extends Character {
         }
         double dx = player.getX() - x;
         if (Math.abs(dx) > 40) {
-            // Henry1 is the fastest, while Henry2 and Henry3 are the slowest
-            double speed = "Henry1".equals(type) ? 4.0 : 1.0;
-            velocityX = (dx > 0) ? speed : -speed;
+            // המהירות נגזרת מסוג האויב
+            velocityX = (dx > 0) ? type.speed : -type.speed;
             facingRight = (dx > 0);
         } else {
             velocityX = 0;
@@ -62,7 +61,8 @@ public class Enemy extends Character {
         if (deathAnimationTicks > 0) deathAnimationTicks--;
     }
 
-    public String getType() { return type; }
+    public EnemyType getType()     { return type; }
+    public String getDisplayName() { return type.displayName; }
     public boolean isDying() { return stats.isDead() && deathAnimationTicks > 0; }
     public boolean shouldDisappear() { return stats.isDead() && deathAnimationTicks <= 0; }
     public int getDeathAnimationTicks() { return deathAnimationTicks; }

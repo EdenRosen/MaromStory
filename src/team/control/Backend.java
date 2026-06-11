@@ -129,11 +129,17 @@ public class Backend {
         Canvas canvas = App.content().canvas();
         MainPlayer player = canvas.getMainPlayer();
 
+        // אם אין מספיק MP לסקיל הפעיל — אין תקיפה וגם אין אנימציה
+        if (!player.getStats().hasEnergy(player.getActiveAttack().getMpCost())) {
+            uiPort().log("Not enough MP for " + player.getActiveAttackName());
+            return;
+        }
+
         player.startAttackAnimation(player.getActiveAttackName());
 
         for (Enemy enemy : canvas.getEnemies()) {
             if (player.useActiveAttack(enemy)) {
-                uiPort().log("Attacked " + enemy.getType() + " | HP: " +
+                uiPort().log("Attacked " + enemy.getDisplayName() + " | HP: " +
                         (int) enemy.getStats().getHealth() + " / " +
                         (int) enemy.getStats().getMaxHealth());
                 uiPort().updatePlayerPosition(player.getX(), player.getY());
@@ -188,8 +194,26 @@ public class Backend {
 
             enemy.updateDeathAnimation();
             if (enemy.shouldDisappear()) {
+                rewardForKill(player);
                 iterator.remove();
             }
+        }
+    }
+
+    // תגמול על חיסול אויב — מטבעות ו-XP, ועליית רמה במידת הצורך
+    private static final int COIN_REWARD = 10;
+    private static final int XP_REWARD   = 25;
+
+    private void rewardForKill(MainPlayer player) {
+        player.getProgress().addCoins(COIN_REWARD);
+        int levelsGained = player.getProgress().addXp(XP_REWARD);
+
+        if (levelsGained > 0) {
+            // פרס עלייה ברמה: חיזוק כוח + ריפוי מלא + מילוי MP
+            player.getStats().setStrength(player.getStats().getStrength() + 2 * levelsGained);
+            player.getStats().heal(player.getStats().getMaxHealth());
+            player.getStats().restoreEnergy(player.getStats().getMaxEnergy());
+            uiPort().log("LEVEL UP! Now level " + player.getProgress().getLevel());
         }
     }
 }
