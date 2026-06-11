@@ -11,6 +11,8 @@ import team.model.Sword;
 
 public class Backend {
 
+    private static final double MP_REGEN_PER_TICK = 0.2;   // ~6.6 MP לשנייה (30ms tick)
+
     private GameState state = GameState.START_SCREEN;
 
     private UiPort uiPort() {
@@ -167,6 +169,9 @@ public class Backend {
         player.update(canvas.getMap().getRectangles());
         player.updateAttackAnimation();
         updateEnemies(canvas);
+
+        // US-5 — התחדשות MP הדרגתית בכל tick (עד למקסימום)
+        player.getStats().restoreEnergy(MP_REGEN_PER_TICK);
 
         // US-2 — מות השחקן מעביר את המערכת ל-Game Over
         if (player.getStats().isDead()) {
