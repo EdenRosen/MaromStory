@@ -5,6 +5,7 @@ import my_base.App;
 import shared.ui_ports.UiPort;
 import team.model.Canvas;
 import team.model.Enemy;
+import team.model.EnemyType;
 import team.model.HeroType;
 import team.model.MainPlayer;
 import team.model.Sword;
@@ -12,8 +13,12 @@ import team.model.Sword;
 public class Backend {
 
     private static final double MP_REGEN_PER_TICK = 0.2;   // ~6.6 MP לשנייה (30ms tick)
+    private static final int MAX_ENEMIES         = 3;      // כמות האויבים שנשמרת על המפה
+    private static final int RESPAWN_DELAY_TICKS = 90;     // ~2.7 שניות בין ריספאונים
 
     private GameState state = GameState.START_SCREEN;
+    private int respawnTimer = RESPAWN_DELAY_TICKS;
+    private int nextEnemyId  = 100;                        // מזהים ייחודיים לאויבי ריספאון
 
     private UiPort uiPort() {
         return UiPort.getInstance();
@@ -169,6 +174,7 @@ public class Backend {
         player.update(canvas.getMap().getRectangles());
         player.updateAttackAnimation();
         updateEnemies(canvas);
+        handleRespawn(canvas);
 
         // US-5 — התחדשות MP הדרגתית בכל tick (עד למקסימום)
         player.getStats().restoreEnergy(MP_REGEN_PER_TICK);
@@ -202,6 +208,22 @@ public class Backend {
                 rewardForKill(player);
                 iterator.remove();
             }
+        }
+    }
+
+    // ריספאון — שומר על MAX_ENEMIES אויבים על המפה; ממלא אחד בכל RESPAWN_DELAY_TICKS
+    private void handleRespawn(Canvas canvas) {
+        if (canvas.getEnemies().size() >= MAX_ENEMIES) {
+            respawnTimer = RESPAWN_DELAY_TICKS;
+            return;
+        }
+        if (--respawnTimer <= 0) {
+            EnemyType[] types = EnemyType.values();
+            EnemyType type = types[(int) (Math.random() * types.length)];
+            double x = 200 + Math.random() * 800;   // מיקום אקראי על המפה
+            canvas.spawnEnemy(nextEnemyId++, x, 430, type);
+            respawnTimer = RESPAWN_DELAY_TICKS;
+            uiPort().log("Respawned " + type.displayName);
         }
     }
 
