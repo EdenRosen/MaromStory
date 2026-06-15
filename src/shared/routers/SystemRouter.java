@@ -36,11 +36,13 @@ public class SystemRouter implements SubRouter {
                     case "throw":  backend.throwSword();     break;
                     case "start":  backend.startScenario();     break;
                     case "attack": backend.attackEnemy();       break;
-                    case "skill1": backend.onSkillKey(0);      break;
-                    case "skill2": backend.onSkillKey(1);      break;
-                    case "skill3": backend.onSkillKey(2);      break;
-                    case "selectHero": backend.cycleHero();    break;
-                    case "cycleMap":   backend.cycleMap();     break;
+                    case "skill1": backend.onNumberKey(0);     break;
+                    case "skill2": backend.onNumberKey(1);     break;
+                    case "skill3": backend.onNumberKey(2);     break;
+                    case "skill4": backend.onNumberKey(3);     break;
+                    case "selectHero":   backend.cycleHero();         break;
+                    case "upgradePanel": backend.toggleUpgradePanel(); break;
+                    case "mapSelect":    backend.toggleMapSelect();    break;
                 }
                 return null;
             }

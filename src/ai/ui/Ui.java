@@ -26,6 +26,8 @@ public class Ui {
         JFrame frame = new JFrame("MaromQuest");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 800);
+        // ממקסם כדי שהחלון יתאים תמיד למסך (מונע חריגה במסכים עם DPI scaling)
+        frame.setExtendedState(frame.getExtendedState() | JFrame.MAXIMIZED_BOTH);
         frame.setLayout(new BorderLayout());
 
         drawingPanel = new DrawingPanel(images, mainRouter);
@@ -34,6 +36,7 @@ public class Ui {
         JPanel controlPanel = createControlPanel();
         frame.add(controlPanel, BorderLayout.SOUTH);
 
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
         uiInstance = new UiPortImpl(images, null, drawingPanel);

@@ -1,21 +1,22 @@
 package team.model;
 
 /**
- * המפות (שלבים) במשחק. כל מפה יודעת את שם התצוגה שלה ואת מאגר סוגי האויבים
- * שמופיעים בה (משמש גם ל-spawn ההתחלתי וגם לריספאון).
- *
- *   MEADOW  — מפת הפתיחה, אויבים רגילים
- *   INFERNO — מפה קשה: אויבים חזקים מאוד שנותנים הרבה יותר XP, וחרב חזקה
+ * המפות (שלבים) במשחק. לכל מפה קונספט עיצובי שונה, מאגר אויבים תואם,
+ * ושם + תיאור קצר להצגה בתפריט בחירת המפות.
  */
 public enum MapType {
-    MEADOW ("Meadow",  EnemyType.SWIFT_HENRY, EnemyType.EVIL_HENRY, EnemyType.GIANT_HENRY),
-    INFERNO("Inferno", EnemyType.INFERNO_HENRY, EnemyType.DOOM_HENRY);
+    MEADOW ("Meadow",  "Grassy plains",  EnemyType.SWIFT_HENRY, EnemyType.EVIL_HENRY, EnemyType.GIANT_HENRY),
+    INFERNO("Inferno", "Hellfire wastes", EnemyType.INFERNO_HENRY, EnemyType.DOOM_HENRY),
+    FROST  ("Frost",   "Frozen tundra",  EnemyType.FROST_HENRY, EnemyType.YETI_HENRY),
+    VOID   ("Void",    "The cosmic void", EnemyType.VOID_HENRY, EnemyType.COSMIC_HENRY);
 
     public final String      displayName;
+    public final String      concept;
     public final EnemyType[] enemyTypes;
 
-    MapType(String displayName, EnemyType... enemyTypes) {
+    MapType(String displayName, String concept, EnemyType... enemyTypes) {
         this.displayName = displayName;
+        this.concept     = concept;
         this.enemyTypes  = enemyTypes;
     }
 }

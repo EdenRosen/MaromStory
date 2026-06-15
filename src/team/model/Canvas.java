@@ -45,6 +45,8 @@ public class Canvas {
         switch (currentMap) {
             case MEADOW:  buildMeadow();  break;
             case INFERNO: buildInferno(); break;
+            case FROST:   buildFrost();   break;
+            case VOID:    buildVoid();    break;
         }
     }
 
@@ -72,6 +74,33 @@ public class Canvas {
         spawnEnemy(1, 700, 430, EnemyType.INFERNO_HENRY);
         spawnEnemy(2, 950, 430, EnemyType.INFERNO_HENRY);
         spawnEnemy(3, 550, 430, EnemyType.DOOM_HENRY);
+    }
+
+    private void buildFrost() {
+        map.addRectangle(new MapRect(0, 0,   500, 1200, 60));
+        map.addRectangle(new MapRect(0, 120, 360, 150,  35));
+        map.addRectangle(new MapRect(0, 600, 300, 140,  35));
+        map.addRectangle(new MapRect(0, 360, 250, 110,  35));
+
+        sword = new Sword("Frost Fang", 50, 420, 320);
+
+        spawnEnemy(1, 680, 430, EnemyType.FROST_HENRY);
+        spawnEnemy(2, 980, 430, EnemyType.FROST_HENRY);
+        spawnEnemy(3, 520, 430, EnemyType.YETI_HENRY);
+    }
+
+    private void buildVoid() {
+        map.addRectangle(new MapRect(0, 0,   500, 1200, 60));
+        map.addRectangle(new MapRect(0, 150, 420, 180,  30));
+        map.addRectangle(new MapRect(0, 500, 250, 180,  30));
+        map.addRectangle(new MapRect(0, 820, 300, 150,  30));
+        map.addRectangle(new MapRect(0, 350, 280, 120,  30));
+
+        sword = new Sword("Void Reaver", 80, 430, 300);
+
+        spawnEnemy(1, 700, 430, EnemyType.VOID_HENRY);
+        spawnEnemy(2, 980, 430, EnemyType.VOID_HENRY);
+        spawnEnemy(3, 540, 430, EnemyType.COSMIC_HENRY);
     }
 
     public Map getMap()               { return map; }

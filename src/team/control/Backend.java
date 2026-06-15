@@ -30,7 +30,8 @@ public class Backend {
     public GameState getState()    { return state; }
     public boolean isGameStarted() { return state != GameState.START_SCREEN; }
     public boolean isGameOver()    { return state == GameState.GAME_OVER; }
-    public boolean isLevelUp()     { return state == GameState.LEVEL_UP; }
+    public boolean isUpgrade()     { return state == GameState.UPGRADE; }
+    public boolean isMapSelect()   { return state == GameState.MAP_SELECT; }
     public int getPendingUpgrades(){ return pendingUpgrades; }
 
     // --- אתחול ---
@@ -169,27 +170,71 @@ public class Backend {
         uiPort().log("Active attack: " + player.getActiveAttackName());
     }
 
-    // מקשי 1/2/3 — בזמן משחק מחליפים סקיל, ובמסך שדרוג בוחרים שיפור
-    public void onSkillKey(int index) {
-        if (state == GameState.LEVEL_UP) applyUpgrade(index);
-        else                             switchAttack(index);
+    // מקשי המספרים — תלוי-מצב: בחירת מפה / בחירת שדרוג / החלפת סקיל
+    public void onNumberKey(int index) {
+        switch (state) {
+            case MAP_SELECT: selectMap(index);    break;
+            case UPGRADE:    applyUpgrade(index); break;
+            case PLAYING:    switchAttack(index); break;
+            default:         break;
+        }
     }
 
-    // החלת השדרוג שנבחר בעליית רמה
+    // --- פאנל שדרוג נקודות (נפתח/נסגר ב-C) ---
+
+    public void toggleUpgradePanel() {
+        if (state == GameState.PLAYING) {
+            App.content().canvas().getMainPlayer().setVelocityX(0);
+            state = GameState.UPGRADE;
+        } else if (state == GameState.UPGRADE) {
+            state = GameState.PLAYING;
+        }
+        refreshPlayer();
+    }
+
+    // החלת שדרוג נבחר (מוציא נקודת שדרוג אחת מהמאגר)
     public void applyUpgrade(int index) {
-        if (state != GameState.LEVEL_UP || pendingUpgrades <= 0) return;
-        MainPlayer player = App.content().canvas().getMainPlayer();
-        PlayerStats s = player.getStats();
+        if (state != GameState.UPGRADE || pendingUpgrades <= 0) return;
+        PlayerStats s = App.content().canvas().getMainPlayer().getStats();
         switch (index) {
             case 0: s.increaseMaxHealth(20);            break;  // +20 HP מקסימלי
             case 1: s.increaseMaxEnergy(10);            break;  // +10 MP מקסימלי
             case 2: s.setStrength(s.getStrength() + 3); break;  // +3 כוח
-            default: return;                                    // מקש לא רלוונטי
+            default: return;
         }
         pendingUpgrades--;
-        uiPort().log("Upgrade applied. Remaining: " + pendingUpgrades);
-        if (pendingUpgrades <= 0) state = GameState.PLAYING;
-        uiPort().updatePlayerPosition(player.getX(), player.getY());  // רענון HUD / overlay
+        uiPort().log("Upgrade applied. Points left: " + pendingUpgrades);
+        refreshPlayer();
+    }
+
+    // --- תפריט בחירת מפה (נפתח/נסגר ב-M) ---
+
+    public void toggleMapSelect() {
+        if (state == GameState.PLAYING) {
+            App.content().canvas().getMainPlayer().setVelocityX(0);
+            state = GameState.MAP_SELECT;
+        } else if (state == GameState.MAP_SELECT) {
+            state = GameState.PLAYING;
+        }
+        refreshPlayer();
+    }
+
+    // בחירת מפה לפי אינדקס מהתפריט — טלפורט תוך שמירת התקדמות
+    public void selectMap(int index) {
+        if (state != GameState.MAP_SELECT) return;
+        MapType[] all = MapType.values();
+        if (index < 0 || index >= all.length) return;
+        Canvas canvas = App.content().canvas();
+        canvas.loadMap(all[index]);
+        state = GameState.PLAYING;
+        uiPort().setMap(canvas.getMap());
+        uiPort().setMainPlayer(canvas.getMainPlayer());
+        uiPort().log("Teleported to map: " + all[index].displayName);
+    }
+
+    private void refreshPlayer() {
+        MainPlayer p = App.content().canvas().getMainPlayer();
+        uiPort().updatePlayerPosition(p.getX(), p.getY());
     }
 
     // --- עדכון תקופתי (נקרא מ-MyPeriodicLoop כל tick) ---
@@ -262,29 +307,17 @@ public class Backend {
         grantXp(player, enemy.getType().xpReward);
     }
 
-    // הוספת XP וטיפול בעליית רמה (פותח את מסך השדרוג)
+    // הוספת XP וטיפול בעליית רמה — צובר נקודות שדרוג (לפתיחה ידנית ב-C)
     private void grantXp(MainPlayer player, int amount) {
         int levelsGained = player.getProgress().addXp(amount);
         if (levelsGained > 0) {
             // פרס בסיסי: ריפוי מלא + מילוי MP
             player.getStats().heal(player.getStats().getMaxHealth());
             player.getStats().restoreEnergy(player.getStats().getMaxEnergy());
-            // מעבר למסך שדרוג — השחקן בוחר אילו נקודות לשפר (שדרוג אחד לכל רמה)
+            // צבירת נקודות שדרוג — השחקן פותח את הפאנל ב-C כדי לשפר
             pendingUpgrades += levelsGained;
-            state = GameState.LEVEL_UP;
-            uiPort().log("LEVEL UP! Choose an upgrade (level " + player.getProgress().getLevel() + ")");
+            uiPort().log("LEVEL UP! Level " + player.getProgress().getLevel()
+                    + " — press C to spend " + pendingUpgrades + " point(s)");
         }
-    }
-
-    // מעבר (טלפורט) למפה הבאה ברשימה — ההתקדמות של השחקן נשמרת (מקש M)
-    public void cycleMap() {
-        if (state != GameState.PLAYING) return;
-        Canvas canvas = App.content().canvas();
-        MapType[] all = MapType.values();
-        MapType next = all[(canvas.getCurrentMap().ordinal() + 1) % all.length];
-        canvas.loadMap(next);
-        uiPort().setMap(canvas.getMap());
-        uiPort().setMainPlayer(canvas.getMainPlayer());
-        uiPort().log("Teleported to map: " + next.displayName);
     }
 }
