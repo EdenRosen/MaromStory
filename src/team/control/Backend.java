@@ -8,6 +8,8 @@ import team.model.Enemy;
 import team.model.EnemyType;
 import team.model.HeroType;
 import team.model.MainPlayer;
+import team.model.MapType;
+import team.model.PlayerStats;
 import team.model.Sword;
 
 public class Backend {
@@ -17,8 +19,9 @@ public class Backend {
     private static final int RESPAWN_DELAY_TICKS = 90;     // ~2.7 שניות בין ריספאונים
 
     private GameState state = GameState.START_SCREEN;
-    private int respawnTimer = RESPAWN_DELAY_TICKS;
-    private int nextEnemyId  = 100;                        // מזהים ייחודיים לאויבי ריספאון
+    private int respawnTimer    = RESPAWN_DELAY_TICKS;
+    private int nextEnemyId     = 100;                     // מזהים ייחודיים לאויבי ריספאון
+    private int pendingUpgrades = 0;                       // שדרוגי רמה שממתינים לבחירת השחקן
 
     private UiPort uiPort() {
         return UiPort.getInstance();
@@ -27,6 +30,8 @@ public class Backend {
     public GameState getState()    { return state; }
     public boolean isGameStarted() { return state != GameState.START_SCREEN; }
     public boolean isGameOver()    { return state == GameState.GAME_OVER; }
+    public boolean isLevelUp()     { return state == GameState.LEVEL_UP; }
+    public int getPendingUpgrades(){ return pendingUpgrades; }
 
     // --- אתחול ---
 
@@ -133,6 +138,7 @@ public class Backend {
     }
 
     public void attackEnemy() {
+        if (state != GameState.PLAYING) return;   // אין תקיפה במסך שדרוג / Game Over
         Canvas canvas = App.content().canvas();
         MainPlayer player = canvas.getMainPlayer();
 
@@ -161,6 +167,29 @@ public class Backend {
         MainPlayer player = App.content().canvas().getMainPlayer();
         player.setActiveAttack(index);
         uiPort().log("Active attack: " + player.getActiveAttackName());
+    }
+
+    // מקשי 1/2/3 — בזמן משחק מחליפים סקיל, ובמסך שדרוג בוחרים שיפור
+    public void onSkillKey(int index) {
+        if (state == GameState.LEVEL_UP) applyUpgrade(index);
+        else                             switchAttack(index);
+    }
+
+    // החלת השדרוג שנבחר בעליית רמה
+    public void applyUpgrade(int index) {
+        if (state != GameState.LEVEL_UP || pendingUpgrades <= 0) return;
+        MainPlayer player = App.content().canvas().getMainPlayer();
+        PlayerStats s = player.getStats();
+        switch (index) {
+            case 0: s.increaseMaxHealth(20);            break;  // +20 HP מקסימלי
+            case 1: s.increaseMaxEnergy(10);            break;  // +10 MP מקסימלי
+            case 2: s.setStrength(s.getStrength() + 3); break;  // +3 כוח
+            default: return;                                    // מקש לא רלוונטי
+        }
+        pendingUpgrades--;
+        uiPort().log("Upgrade applied. Remaining: " + pendingUpgrades);
+        if (pendingUpgrades <= 0) state = GameState.PLAYING;
+        uiPort().updatePlayerPosition(player.getX(), player.getY());  // רענון HUD / overlay
     }
 
     // --- עדכון תקופתי (נקרא מ-MyPeriodicLoop כל tick) ---
@@ -205,7 +234,7 @@ public class Backend {
 
             enemy.updateDeathAnimation();
             if (enemy.shouldDisappear()) {
-                rewardForKill(player);
+                rewardForKill(player, enemy);
                 iterator.remove();
             }
         }
@@ -218,8 +247,8 @@ public class Backend {
             return;
         }
         if (--respawnTimer <= 0) {
-            EnemyType[] types = EnemyType.values();
-            EnemyType type = types[(int) (Math.random() * types.length)];
+            EnemyType[] pool = canvas.getCurrentMap().enemyTypes;   // אויבים לפי המפה הנוכחית
+            EnemyType type = pool[(int) (Math.random() * pool.length)];
             double x = 200 + Math.random() * 800;   // מיקום אקראי על המפה
             canvas.spawnEnemy(nextEnemyId++, x, 430, type);
             respawnTimer = RESPAWN_DELAY_TICKS;
@@ -227,20 +256,35 @@ public class Backend {
         }
     }
 
-    // תגמול על חיסול אויב — מטבעות ו-XP, ועליית רמה במידת הצורך
-    private static final int COIN_REWARD = 10;
-    private static final int XP_REWARD   = 25;
+    // תגמול על חיסול אויב — מטבעות ו-XP לפי סוג האויב (אויב חזק = יותר XP)
+    private void rewardForKill(MainPlayer player, Enemy enemy) {
+        player.getProgress().addCoins(enemy.getType().coinReward);
+        grantXp(player, enemy.getType().xpReward);
+    }
 
-    private void rewardForKill(MainPlayer player) {
-        player.getProgress().addCoins(COIN_REWARD);
-        int levelsGained = player.getProgress().addXp(XP_REWARD);
-
+    // הוספת XP וטיפול בעליית רמה (פותח את מסך השדרוג)
+    private void grantXp(MainPlayer player, int amount) {
+        int levelsGained = player.getProgress().addXp(amount);
         if (levelsGained > 0) {
-            // פרס עלייה ברמה: חיזוק כוח + ריפוי מלא + מילוי MP
-            player.getStats().setStrength(player.getStats().getStrength() + 2 * levelsGained);
+            // פרס בסיסי: ריפוי מלא + מילוי MP
             player.getStats().heal(player.getStats().getMaxHealth());
             player.getStats().restoreEnergy(player.getStats().getMaxEnergy());
-            uiPort().log("LEVEL UP! Now level " + player.getProgress().getLevel());
+            // מעבר למסך שדרוג — השחקן בוחר אילו נקודות לשפר (שדרוג אחד לכל רמה)
+            pendingUpgrades += levelsGained;
+            state = GameState.LEVEL_UP;
+            uiPort().log("LEVEL UP! Choose an upgrade (level " + player.getProgress().getLevel() + ")");
         }
+    }
+
+    // מעבר (טלפורט) למפה הבאה ברשימה — ההתקדמות של השחקן נשמרת (מקש M)
+    public void cycleMap() {
+        if (state != GameState.PLAYING) return;
+        Canvas canvas = App.content().canvas();
+        MapType[] all = MapType.values();
+        MapType next = all[(canvas.getCurrentMap().ordinal() + 1) % all.length];
+        canvas.loadMap(next);
+        uiPort().setMap(canvas.getMap());
+        uiPort().setMainPlayer(canvas.getMainPlayer());
+        uiPort().log("Teleported to map: " + next.displayName);
     }
 }

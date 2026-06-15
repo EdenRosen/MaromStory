@@ -11,6 +11,7 @@ import shared.MainRouter;
 import shared.ui_ports.UiPort;
 import team.model.EnemyType;
 import team.model.HeroType;
+import team.model.MapType;
 import team.model.MapRect;
 
 public class DrawingPanel extends JPanel {
@@ -73,6 +74,8 @@ public class DrawingPanel extends JPanel {
             case KeyEvent.VK_C:      return "attack";
             case KeyEvent.VK_1:      return "skill1";
             case KeyEvent.VK_2:      return "skill2";
+            case KeyEvent.VK_3:      return "skill3";
+            case KeyEvent.VK_M:      return "cycleMap";
             case KeyEvent.VK_TAB:    return "selectHero";
             case KeyEvent.VK_ENTER:  return "start";
             default: return null;
@@ -99,11 +102,86 @@ public class DrawingPanel extends JPanel {
         renderAttackAnimation(g);
         renderPlayerStats(g);
         renderActiveSkillHUD(g);
+        renderMapLabel(g);
 
         // US-2 — מסך Game Over מעל העולם הקפוא
         if (App.content().backend().isGameOver()) {
             renderGameOver(g);
+        } else if (App.content().backend().isLevelUp()) {
+            renderLevelUp(g);
         }
+    }
+
+    // תווית המפה הנוכחית + רמז למקש M
+    private void renderMapLabel(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        MapType m = App.content().canvas().getCurrentMap();
+        String label = "Map: " + m.displayName + "    [M] switch";
+        g2d.setFont(new Font("Arial", Font.BOLD, 15));
+        FontMetrics fm = g2d.getFontMetrics();
+        int tw = fm.stringWidth(label);
+        int x = (getWidth() - tw) / 2, y = 26;
+        g2d.setColor(new Color(0, 0, 0, 150));
+        g2d.fillRoundRect(x - 12, y - 18, tw + 24, 26, 12, 12);
+        g2d.setColor(m == MapType.INFERNO ? new Color(255, 120, 90) : new Color(150, 230, 150));
+        g2d.drawString(label, x, y);
+    }
+
+    // מסך שדרוג בעליית רמה — מקפיא את המשחק ומאפשר לבחור איזה stat לשפר
+    private void renderLevelUp(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int w = getWidth(), h = getHeight(), cx = w / 2;
+        g2d.setColor(new Color(10, 8, 24, 205));
+        g2d.fillRect(0, 0, w, h);
+
+        g2d.setColor(new Color(255, 210, 70));
+        g2d.setFont(new Font("Arial", Font.BOLD, 54));
+        String title = "LEVEL UP!";
+        g2d.drawString(title, cx - g2d.getFontMetrics().stringWidth(title) / 2, h / 2 - 140);
+
+        team.model.MainPlayer player = UiPort.getInstance().getMainPlayer();
+        int level = (player != null) ? player.getProgress().getLevel() : 0;
+        int pending = App.content().backend().getPendingUpgrades();
+        g2d.setColor(new Color(210, 205, 230));
+        g2d.setFont(new Font("Arial", Font.PLAIN, 20));
+        String sub = "Level " + level + "   —   Choose an upgrade" + (pending > 1 ? "   (" + pending + " left)" : "");
+        g2d.drawString(sub, cx - g2d.getFontMetrics().stringWidth(sub) / 2, h / 2 - 105);
+
+        String[] keys  = { "1", "2", "3" };
+        String[] descs = { "+20 Max HP", "+10 Max MP", "+3 STR" };
+        Color[]  acc   = { new Color(60, 200, 80), new Color(80, 160, 240), new Color(240, 150, 50) };
+
+        int cardW = 190, cardH = 130, gap = 28;
+        int totalW = 3 * cardW + 2 * gap;
+        int startX = cx - totalW / 2, cardY = h / 2 - 60;
+
+        for (int i = 0; i < 3; i++) {
+            int x = startX + i * (cardW + gap);
+            g2d.setColor(new Color(30, 26, 52));
+            g2d.fillRoundRect(x, cardY, cardW, cardH, 18, 18);
+            g2d.setStroke(new BasicStroke(2.5f));
+            g2d.setColor(acc[i]);
+            g2d.drawRoundRect(x, cardY, cardW, cardH, 18, 18);
+
+            // תג מקש
+            g2d.fillRoundRect(x + cardW / 2 - 22, cardY + 18, 44, 40, 10, 10);
+            g2d.setColor(new Color(20, 16, 34));
+            g2d.setFont(new Font("Arial", Font.BOLD, 26));
+            g2d.drawString(keys[i], x + cardW / 2 - g2d.getFontMetrics().stringWidth(keys[i]) / 2, cardY + 47);
+
+            // תיאור השדרוג
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Arial", Font.BOLD, 20));
+            g2d.drawString(descs[i], x + cardW / 2 - g2d.getFontMetrics().stringWidth(descs[i]) / 2, cardY + 95);
+        }
+
+        g2d.setColor(new Color(150, 145, 170));
+        g2d.setFont(new Font("Arial", Font.PLAIN, 15));
+        String hint = "Press  1 / 2 / 3  to choose";
+        g2d.drawString(hint, cx - g2d.getFontMetrics().stringWidth(hint) / 2, cardY + cardH + 42);
     }
 
     private void renderGameOver(Graphics g) {
@@ -290,6 +368,12 @@ public class DrawingPanel extends JPanel {
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2d.drawImage(background.image, drawX, drawY, drawWidth, drawHeight, this);
         g2d.setRenderingHints(oldHints);
+
+        // גוון אדום לוהט למפת ה-Inferno
+        if (App.content().canvas().getCurrentMap() == MapType.INFERNO) {
+            g2d.setColor(new Color(140, 20, 0, 90));
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+        }
     }
 
     private void renderImages(Graphics g) {
@@ -313,8 +397,10 @@ public class DrawingPanel extends JPanel {
         if (currentMap == null || currentMap.getRectangles() == null) return;
 
         Graphics2D g2d = (Graphics2D) g;
+        boolean inferno = App.content().canvas().getCurrentMap() == MapType.INFERNO;
+        Color platformColor = inferno ? new Color(95, 45, 45) : new Color(120, 220, 120);
         for (MapRect rect : currentMap.getRectangles()) {
-            g2d.setColor(new Color(120, 220, 120));
+            g2d.setColor(platformColor);
             g2d.fillRect((int) rect.getX(), (int) rect.getY(), (int) rect.getWidth(), (int) rect.getHeight());
         }
     }
@@ -397,10 +483,12 @@ public class DrawingPanel extends JPanel {
 
     private Image getEnemyImage(EnemyType type) {
         switch (type) {
-            case SWIFT_HENRY: return ENEMY_HENRY1;
-            case EVIL_HENRY:  return ENEMY_HENRY2;
-            case GIANT_HENRY: return ENEMY_HENRY3;
-            default:          return ENEMY_HENRY1;
+            case SWIFT_HENRY:   return ENEMY_HENRY1;
+            case EVIL_HENRY:    return ENEMY_HENRY2;
+            case GIANT_HENRY:   return ENEMY_HENRY3;
+            case INFERNO_HENRY: return ENEMY_HENRY2;
+            case DOOM_HENRY:    return ENEMY_HENRY3;
+            default:            return ENEMY_HENRY1;
         }
     }
 
@@ -421,13 +509,24 @@ public class DrawingPanel extends JPanel {
             int ey = (int) enemy.getY();
             int ew = 70, eh = 82, eyOff = 32;
 
-            if (enemy.getType() == EnemyType.GIANT_HENRY) {
+            EnemyType type = enemy.getType();
+            if (type == EnemyType.GIANT_HENRY || type == EnemyType.DOOM_HENRY) {
                 ew = 110; eh = 130; eyOff = 80;
             }
 
             if (enemy.isDying()) {
                 renderEnemyDeathAnimation(g2d, enemy, img, ex, ey - (eyOff - 12), ew, eh);
                 continue;
+            }
+
+            // הילה אדומה לוהטת לאויבי מפת ה-Inferno (חזקים)
+            if (type == EnemyType.INFERNO_HENRY || type == EnemyType.DOOM_HENRY) {
+                int cxp = ex + ew / 2, cyp = ey - eyOff + eh / 2;
+                for (int r = 3; r >= 1; r--) {
+                    int rad = (ew / 2) + r * 8;
+                    g2d.setColor(new Color(255, 60, 20, 45));
+                    g2d.fillOval(cxp - rad, cyp - rad, rad * 2, rad * 2);
+                }
             }
 
             drawImageFit(g2d, img, ex, ey - eyOff, ew, eh, enemy.isFacingRight());

@@ -52,6 +52,18 @@ public class PlayerStats {
         energy = Math.min(maxEnergy, energy + amount);
     }
 
+    // --- שדרוגי רמה (מגדילים את המקסימום ומוסיפים גם לערך הנוכחי) ---
+
+    public void increaseMaxHealth(double amount) {
+        maxHealth += amount;
+        health    += amount;
+    }
+
+    public void increaseMaxEnergy(double amount) {
+        maxEnergy += amount;
+        energy    += amount;
+    }
+
     public boolean hasEnergy(double amount) { return energy >= amount; }
 
     // --- כוח וזריזות ---
