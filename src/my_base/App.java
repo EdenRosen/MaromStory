@@ -20,7 +20,7 @@ public class App {
     public static AppContent content() {
         return content;
     }
- 
+
     public static Ui UI() {
         return ui;
     }

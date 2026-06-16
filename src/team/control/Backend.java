@@ -7,6 +7,7 @@ import team.model.ArmorSet;
 import team.model.Canvas;
 import team.model.Enemy;
 import team.model.EnemyType;
+import team.model.GameMode;
 import team.model.HeroType;
 import team.model.MainPlayer;
 import team.model.MapType;
@@ -50,25 +51,40 @@ public class Backend {
     }
 
     // נקרא כשהשחקן לוחץ Enter
-    //   ממסך פתיחה  → מתחיל משחק
-    //   מ-Game Over → מאתחל ומתחיל מחדש
+    //   ממסך פתיחה  → מסך בחירת מצב (Solo/Multiplayer)
+    //   מ-Game Mode → מתחיל משחק
+    //   מ-Game Over → חזרה למסך פתיחה
     //   תוך כדי משחק → מתעלם
     public void startScenario() {
-        if (state == GameState.GAME_OVER) { resetScenario(); return; }
-        if (state == GameState.PLAYING) return;
-
-        Canvas canvas = App.content().canvas();
-
-        uiPort().addImage(99, "resources/canvaBackround.jpg", 0, 0, 1200, 800, 0, true);
-        uiPort().setMap(canvas.getMap());
-        uiPort().setMainPlayer(canvas.getMainPlayer());
-
-        state = GameState.PLAYING;
-
-        // שלב 4 בתרשים רצף — Game System מודיע ל-UI לצייר את מצב הפתיחה
-        uiPort().renderInitials();
-
-        uiPort().log("Scenario started: MapleQuest");
+        if (state == GameState.GAME_OVER) {
+            state = GameState.START_SCREEN;
+            Canvas canvas = App.content().canvas();
+            canvas.initCanvas();
+            uiPort().setMap(canvas.getMap());
+            uiPort().setMainPlayer(canvas.getMainPlayer());
+            return;
+        }
+        if (state == GameState.START_SCREEN) {
+            // המעבר הבא הוא לבחירת מצב (Solo / Multiplayer)
+            state = GameState.GAME_MODE_SELECT;
+            uiPort().log("Select game mode: Solo or Multiplayer");
+            return;
+        }
+        if (state == GameState.GAME_MODE_SELECT) {
+            // כעת התחל משחק בפועל
+            Canvas canvas = App.content().canvas();
+            uiPort().addImage(99, "resources/canvaBackround.jpg", 0, 0, 1200, 800, 0, true);
+            uiPort().setMap(canvas.getMap());
+            uiPort().setMainPlayer(canvas.getMainPlayer());
+            if (canvas.getMainPlayer2() != null) {
+                uiPort().setMainPlayer2(canvas.getMainPlayer2());
+            }
+            state = GameState.PLAYING;
+            uiPort().renderInitials();
+            uiPort().log("Scenario started: MaromQuest");
+            return;
+        }
+        if (state == GameState.PLAYING) return;  // בעוד המשחק רץ — אל תעשה כלום
     }
 
     // החלפת טאב בחנות — TAB מחליף בין נשק לשריון
@@ -92,6 +108,23 @@ public class Backend {
         uiPort().log("Hero selected: " + next);
     }
 
+    // בחירת מצב משחק — Solo או Multiplayer. פעיל רק במסך בחירת מצב
+    public void cycleGameMode() {
+        if (state != GameState.GAME_MODE_SELECT) return;
+        Canvas canvas = App.content().canvas();
+        GameMode next = canvas.getSelectedGameMode() == GameMode.SOLO 
+            ? GameMode.MULTIPLAYER 
+            : GameMode.SOLO;
+        canvas.setSelectedGameMode(next);
+        canvas.initCanvas();
+        uiPort().setMap(canvas.getMap());
+        uiPort().setMainPlayer(canvas.getMainPlayer());
+        if (canvas.getMainPlayer2() != null) {
+            uiPort().setMainPlayer2(canvas.getMainPlayer2());
+        }
+        uiPort().log("Game mode selected: " + next);
+    }
+
     public void resetScenario() {
         Canvas canvas = App.content().canvas();
         canvas.initCanvas();
@@ -113,11 +146,107 @@ public class Backend {
 
     public void stopMove() {
         MainPlayer player = App.content().canvas().getMainPlayer();
-        if (player.isOnGround()) player.setVelocityX(0);
+        if (player != null) player.setVelocityX(0);
     }
 
     public void playerJump() {
         App.content().canvas().getMainPlayer().jump();
+    }
+
+    // --- Player 2 Control (Multiplayer Mode) ---
+
+    public void startMoveLeft_p2() {
+        MainPlayer p2 = App.content().canvas().getMainPlayer2();
+        if (p2 != null) p2.setVelocityX(-MainPlayer.MOVE_SPEED);
+    }
+
+    public void startMoveRight_p2() {
+        MainPlayer p2 = App.content().canvas().getMainPlayer2();
+        if (p2 != null) p2.setVelocityX(MainPlayer.MOVE_SPEED);
+    }
+
+    public void stopMove_p2() {
+        MainPlayer p2 = App.content().canvas().getMainPlayer2();
+        if (p2 != null) p2.setVelocityX(0);
+    }
+
+    public void playerJump_p2() {
+        MainPlayer p2 = App.content().canvas().getMainPlayer2();
+        if (p2 != null) p2.jump();
+    }
+
+    public void attackEnemy_p2() {
+        if (state != GameState.PLAYING) return;
+        Canvas canvas = App.content().canvas();
+        MainPlayer p2 = canvas.getMainPlayer2();
+        if (p2 == null) return;
+
+        if (!p2.getStats().hasEnergy(p2.getActiveAttack().getMpCost())) {
+            uiPort().log("[P2] Not enough MP for " + p2.getActiveAttackName());
+            return;
+        }
+
+        p2.startAttackAnimation(p2.getActiveAttackName());
+
+        MainPlayer player1 = canvas.getMainPlayer();
+        if (!player1.getStats().isDead() && p2.useActiveAttack(player1)) {
+            uiPort().log("[P2] Attacked P1 | HP: " +
+                    (int) player1.getStats().getHealth() + " / " +
+                    (int) player1.getStats().getMaxHealth());
+            uiPort().updatePlayerPosition(player1.getX(), player1.getY());
+            uiPort().updatePlayer2Position(p2.getX(), p2.getY());
+            return;
+        }
+
+        for (Enemy enemy : canvas.getEnemies()) {
+            if (p2.useActiveAttack(enemy)) {
+                uiPort().log("[P2] Attacked " + enemy.getDisplayName() + " | HP: " +
+                        (int) enemy.getStats().getHealth() + " / " +
+                        (int) enemy.getStats().getMaxHealth());
+                uiPort().updatePlayer2Position(p2.getX(), p2.getY());
+                return;
+            }
+        }
+
+        uiPort().updatePlayer2Position(p2.getX(), p2.getY());
+    }
+
+    public void switchAttack_p2(int index) {
+        MainPlayer p2 = App.content().canvas().getMainPlayer2();
+        if (p2 != null) {
+            p2.setActiveAttack(index);
+            uiPort().log("[P2] Active attack: " + p2.getActiveAttackName());
+        }
+    }
+
+    public void attemptPickup_p2() {
+        MainPlayer player2 = App.content().canvas().getMainPlayer2();
+        if (player2 == null) return;
+        
+        Sword sword = App.content().canvas().getSword();
+
+        if (sword == null || !sword.isOnGround() || player2.hasSword()) return;
+
+        // Check distance
+        double dist = Math.sqrt(Math.pow(player2.getX() - sword.getX(), 2) +
+                                Math.pow(player2.getY() - sword.getY(), 2));
+
+        if (dist <= MainPlayer.PICKUP_RANGE) {
+            // Pick up and update stats
+            player2.pickupSword(sword);
+            uiPort().log("[P2] Picked up: " + sword.getName() + " | STR now: " + player2.getStats().getStrength());
+            // Update display
+            uiPort().updatePlayer2Position(player2.getX(), player2.getY());
+        }
+    }
+
+    public void throwSword_p2() {
+        MainPlayer player2 = App.content().canvas().getMainPlayer2();
+        if (player2 == null || !player2.hasSword()) return;
+
+        Sword dropped = player2.dropSword();
+        uiPort().log("[P2] Dropped: " + dropped.getName() + " | STR now: " + player2.getStats().getStrength());
+        uiPort().updatePlayer2Position(player2.getX(), player2.getY());
     }
 
     // --- הרמה וזריקה של חרב לפי Sequence Diagram ---
@@ -155,6 +284,7 @@ public class Backend {
         if (state != GameState.PLAYING) return;   // אין תקיפה במסך שדרוג / Game Over
         Canvas canvas = App.content().canvas();
         MainPlayer player = canvas.getMainPlayer();
+        MainPlayer player2 = canvas.getMainPlayer2();
 
         // אם אין מספיק MP לסקיל הפעיל — אין תקיפה וגם אין אנימציה
         if (!player.getStats().hasEnergy(player.getActiveAttack().getMpCost())) {
@@ -163,6 +293,16 @@ public class Backend {
         }
 
         player.startAttackAnimation(player.getActiveAttackName());
+
+        // Friendly fire: attack player 2 if in range and valid target
+        if (player2 != null && !player2.getStats().isDead() && player.useActiveAttack(player2)) {
+            uiPort().log("Attacked P2 | HP: " +
+                    (int) player2.getStats().getHealth() + " / " +
+                    (int) player2.getStats().getMaxHealth());
+            uiPort().updatePlayerPosition(player.getX(), player.getY());
+            uiPort().updatePlayer2Position(player2.getX(), player2.getY());
+            return;
+        }
 
         for (Enemy enemy : canvas.getEnemies()) {
             if (player.useActiveAttack(enemy)) {
@@ -315,45 +455,85 @@ public class Backend {
         if (state != GameState.PLAYING) return;
 
         Canvas canvas = App.content().canvas();
-        MainPlayer player = canvas.getMainPlayer();
-        player.update(canvas.getMap().getRectangles());
-        player.updateAttackAnimation();
+        MainPlayer player1 = canvas.getMainPlayer();
+        MainPlayer player2 = canvas.getMainPlayer2();
+
+        // עדכון Player 1
+        player1.update(canvas.getMap().getRectangles());
+        player1.updateAttackAnimation();
+
+        // עדכון Player 2 (אם קיים במצב Multiplayer)
+        if (player2 != null) {
+            player2.update(canvas.getMap().getRectangles());
+            player2.updateAttackAnimation();
+        }
+
         updateEnemies(canvas);
         handleRespawn(canvas);
 
         // US-5 — התחדשות MP הדרגתית בכל tick (עד למקסימום)
-        player.getStats().restoreEnergy(MP_REGEN_PER_TICK);
+        player1.getStats().restoreEnergy(MP_REGEN_PER_TICK);
+        if (player2 != null) {
+            player2.getStats().restoreEnergy(MP_REGEN_PER_TICK);
+        }
 
-        // US-2 — מות השחקן מעביר את המערכת ל-Game Over
-        if (player.getStats().isDead()) {
+        // US-2 — מות אחד מהשחקנים מעביר את המערכת ל-Game Over
+        boolean p1Dead = player1.getStats().isDead();
+        boolean p2Dead = player2 != null && player2.getStats().isDead();
+        
+        if (p1Dead || p2Dead) {
             state = GameState.GAME_OVER;
             uiPort().log("Game Over");
         }
 
-        uiPort().updatePlayerPosition(player.getX(), player.getY());
+        uiPort().updatePlayerPosition(player1.getX(), player1.getY());
+        if (player2 != null) {
+            uiPort().updatePlayer2Position(player2.getX(), player2.getY());
+        }
     }
 
     private void updateEnemies(Canvas canvas) {
-        MainPlayer player = canvas.getMainPlayer();
+        MainPlayer player1 = canvas.getMainPlayer();
+        MainPlayer player2 = canvas.getMainPlayer2();
         java.util.List<team.model.MapRect> platforms = canvas.getMap().getRectangles();
         Iterator<Enemy> iterator = canvas.getEnemies().iterator();
         while (iterator.hasNext()) {
             Enemy enemy = iterator.next();
-            enemy.updateAi(player);
+            MainPlayer target = chooseClosestTarget(player1, player2, enemy);
+            enemy.updateAi(target != null ? target : player1);
             enemy.update(platforms);
             enemy.updateCooldown();
 
-            // US-1 — אויב בטווח מכה את השחקן (עם cooldown בין מכות)
-            if (enemy.canAttack(player, Enemy.ATTACK_RANGE)) {
-                enemy.attackPlayer(player);
+            // US-1 — אויב בטווח מכה את השחקן הקרוב ביותר (עם cooldown בין מכות)
+            if (target != null && enemy.canAttack(target, Enemy.ATTACK_RANGE)) {
+                enemy.attackPlayer(target);
             }
 
             enemy.updateDeathAnimation();
             if (enemy.shouldDisappear()) {
-                rewardForKill(player, enemy);
+                rewardForKill(target != null ? target : player1, enemy);
                 iterator.remove();
             }
         }
+    }
+
+    private MainPlayer chooseClosestTarget(MainPlayer player1, MainPlayer player2, Enemy enemy) {
+        if (player2 == null || player2.getStats().isDead()) {
+            return player1;
+        }
+        if (player1.getStats().isDead()) {
+            return player2;
+        }
+
+        double distance1 = distanceBetween(enemy.getX(), enemy.getY(), player1.getX(), player1.getY());
+        double distance2 = distanceBetween(enemy.getX(), enemy.getY(), player2.getX(), player2.getY());
+        return distance1 <= distance2 ? player1 : player2;
+    }
+
+    private double distanceBetween(double x1, double y1, double x2, double y2) {
+        double dx = x1 - x2;
+        double dy = y1 - y2;
+        return Math.sqrt(dx * dx + dy * dy);
     }
 
     // ריספאון — שומר על MAX_ENEMIES אויבים על המפה; ממלא אחד בכל RESPAWN_DELAY_TICKS

@@ -25,6 +25,10 @@ public abstract class UiPort {
     public abstract team.model.MainPlayer getMainPlayer();
     public abstract void updatePlayerPosition(double x, double y);
 
+    public abstract void setMainPlayer2(team.model.MainPlayer player);
+    public abstract team.model.MainPlayer getMainPlayer2();
+    public abstract void updatePlayer2Position(double x, double y);
+
     public abstract void log(String message);
 
     public abstract void renderInitials();
