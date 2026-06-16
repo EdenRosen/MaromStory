@@ -127,7 +127,8 @@ public abstract class Character extends IdentifiedObject {
     }
     
 
-    public boolean hasSword() { return equippedSword != null; }
+    public boolean hasSword()          { return equippedSword != null; }
+    public Sword  getEquippedSword()   { return equippedSword; }
 
     public void takeDamage(double damage) {
         stats.takeDamage(damage);

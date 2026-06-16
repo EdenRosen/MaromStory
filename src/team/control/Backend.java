@@ -3,6 +3,7 @@ package team.control;
 import java.util.Iterator;
 import my_base.App;
 import shared.ui_ports.UiPort;
+import team.model.ArmorSet;
 import team.model.Canvas;
 import team.model.Enemy;
 import team.model.EnemyType;
@@ -10,6 +11,7 @@ import team.model.HeroType;
 import team.model.MainPlayer;
 import team.model.MapType;
 import team.model.PlayerStats;
+import team.model.ShopItem;
 import team.model.Sword;
 
 public class Backend {
@@ -22,6 +24,7 @@ public class Backend {
     private int respawnTimer    = RESPAWN_DELAY_TICKS;
     private int nextEnemyId     = 100;                     // מזהים ייחודיים לאויבי ריספאון
     private int pendingUpgrades = 0;                       // שדרוגי רמה שממתינים לבחירת השחקן
+    private int shopPage        = 0;                       // 0=weapons, 1=armor
 
     private UiPort uiPort() {
         return UiPort.getInstance();
@@ -32,6 +35,8 @@ public class Backend {
     public boolean isGameOver()    { return state == GameState.GAME_OVER; }
     public boolean isUpgrade()     { return state == GameState.UPGRADE; }
     public boolean isMapSelect()   { return state == GameState.MAP_SELECT; }
+    public boolean isShop()        { return state == GameState.SHOP; }
+    public int     getShopPage()   { return shopPage; }
     public int getPendingUpgrades(){ return pendingUpgrades; }
 
     // --- אתחול ---
@@ -64,6 +69,13 @@ public class Backend {
         uiPort().renderInitials();
 
         uiPort().log("Scenario started: MapleQuest");
+    }
+
+    // החלפת טאב בחנות — TAB מחליף בין נשק לשריון
+    public void cycleShopPage() {
+        if (state != GameState.SHOP) return;
+        shopPage = 1 - shopPage;
+        refreshPlayer();
     }
 
     // בחירת גיבור — פעיל רק במסך הפתיחה. מחליף את הסוג ובונה מחדש כדי
@@ -100,7 +112,8 @@ public class Backend {
     }
 
     public void stopMove() {
-        App.content().canvas().getMainPlayer().setVelocityX(0);
+        MainPlayer player = App.content().canvas().getMainPlayer();
+        if (player.isOnGround()) player.setVelocityX(0);
     }
 
     public void playerJump() {
@@ -170,11 +183,12 @@ public class Backend {
         uiPort().log("Active attack: " + player.getActiveAttackName());
     }
 
-    // מקשי המספרים — תלוי-מצב: בחירת מפה / בחירת שדרוג / החלפת סקיל
+    // מקשי המספרים — תלוי-מצב: בחירת מפה / בחירת שדרוג / חנות / החלפת סקיל
     public void onNumberKey(int index) {
         switch (state) {
             case MAP_SELECT: selectMap(index);    break;
             case UPGRADE:    applyUpgrade(index); break;
+            case SHOP:       buyItem(index);      break;
             case PLAYING:    switchAttack(index); break;
             default:         break;
         }
@@ -216,6 +230,63 @@ public class Backend {
         } else if (state == GameState.MAP_SELECT) {
             state = GameState.PLAYING;
         }
+        refreshPlayer();
+    }
+
+    // --- חנות (נפתחת/נסגרת ב-B) ---
+
+    public void toggleShop() {
+        if (state == GameState.PLAYING) {
+            App.content().canvas().getMainPlayer().setVelocityX(0);
+            shopPage = 0;
+            state = GameState.SHOP;
+        } else if (state == GameState.SHOP) {
+            state = GameState.PLAYING;
+        }
+        refreshPlayer();
+    }
+
+    // קניית פריט לפי אינדקס — מנכה מטבעות, שם חרב על הקרקע ליד השחקן
+    public void buyItem(int index) {
+        if (state != GameState.SHOP) return;
+        if (shopPage == 0) buyWeapon(index);
+        else               buyArmor(index);
+    }
+
+    private void buyWeapon(int index) {
+        ShopItem[] items = ShopItem.values();
+        if (index < 0 || index >= items.length) return;
+        ShopItem item = items[index];
+        Canvas canvas = App.content().canvas();
+        MainPlayer player = canvas.getMainPlayer();
+        if (!player.getProgress().spendCoins(item.price)) {
+            uiPort().log("Not enough coins for " + item.name + " (need " + item.price + ")");
+            return;
+        }
+        if (player.hasSword()) player.dropSword();
+        Sword newSword = new Sword(item.name, item.strBonus, player.getX() + 14, player.getY() + 18);
+        canvas.setSword(newSword);
+        state = GameState.PLAYING;
+        uiPort().log("Bought " + item.name + " (STR +" + item.strBonus + ") — press Z to pick up");
+        refreshPlayer();
+    }
+
+    private void buyArmor(int index) {
+        ArmorSet[] sets = ArmorSet.values();
+        if (index < 0 || index >= sets.length) return;
+        ArmorSet armor = sets[index];
+        MainPlayer player = App.content().canvas().getMainPlayer();
+        if (!player.getProgress().spendCoins(armor.price)) {
+            uiPort().log("Not enough coins for " + armor.name + " (need " + armor.price + ")");
+            return;
+        }
+        PlayerStats s = player.getStats();
+        s.increaseMaxHealth(armor.hpBonus);
+        s.increaseMaxEnergy(armor.mpBonus);
+        s.setStrength(s.getStrength() + armor.strBonus);
+        s.increaseDefense(armor.defBonus);
+        state = GameState.PLAYING;
+        uiPort().log("Equipped " + armor.name + " (+HP+" + armor.hpBonus + " DEF+" + armor.defBonus + ")");
         refreshPlayer();
     }
 

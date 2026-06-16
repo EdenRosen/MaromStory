@@ -40,9 +40,12 @@ public class SystemRouter implements SubRouter {
                     case "skill2": backend.onNumberKey(1);     break;
                     case "skill3": backend.onNumberKey(2);     break;
                     case "skill4": backend.onNumberKey(3);     break;
+                    case "skill5": backend.onNumberKey(4);     break;
                     case "selectHero":   backend.cycleHero();         break;
+                    case "shopTab":      backend.cycleShopPage();     break;
                     case "upgradePanel": backend.toggleUpgradePanel(); break;
                     case "mapSelect":    backend.toggleMapSelect();    break;
+                    case "shop":         backend.toggleShop();         break;
                 }
                 return null;
             }

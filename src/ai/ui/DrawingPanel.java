@@ -77,8 +77,10 @@ public class DrawingPanel extends JPanel {
             case KeyEvent.VK_2:      return "skill2";
             case KeyEvent.VK_3:      return "skill3";
             case KeyEvent.VK_4:      return "skill4";
+            case KeyEvent.VK_5:      return "skill5";
             case KeyEvent.VK_M:      return "mapSelect";
-            case KeyEvent.VK_TAB:    return "selectHero";
+            case KeyEvent.VK_B:      return "shop";
+            case KeyEvent.VK_TAB:    return App.content().backend().isShop() ? "shopTab" : "selectHero";
             case KeyEvent.VK_ENTER:  return "start";
             default: return null;
         }
@@ -106,13 +108,14 @@ public class DrawingPanel extends JPanel {
         renderActiveSkillHUD(g);
         renderMapLabel(g);
 
-        // US-2 — מסך Game Over מעל העולם הקפוא
         if (App.content().backend().isGameOver()) {
             renderGameOver(g);
         } else if (App.content().backend().isUpgrade()) {
             renderUpgradePanel(g);
         } else if (App.content().backend().isMapSelect()) {
             renderMapSelect(g);
+        } else if (App.content().backend().isShop()) {
+            renderShop(g);
         }
     }
 
@@ -277,6 +280,255 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    private void renderShop(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int w = getWidth(), h = getHeight(), cx = w / 2;
+        int shopPage = App.content().backend().getShopPage();
+
+        g2d.setColor(new Color(10, 8, 20, 220));
+        g2d.fillRect(0, 0, w, h);
+        g2d.setPaint(new GradientPaint(0, 0, new Color(60, 45, 0, 35), 0, h, new Color(0, 0, 0, 0)));
+        g2d.fillRect(0, 0, w, h);
+
+        // כותרת
+        g2d.setFont(new Font("Arial", Font.BOLD, 48));
+        String title = "SHOP";
+        g2d.setColor(new Color(200, 160, 10, 50));
+        g2d.drawString(title, cx - g2d.getFontMetrics().stringWidth(title)/2 + 2, 97);
+        g2d.setColor(new Color(255, 210, 50));
+        g2d.drawString(title, cx - g2d.getFontMetrics().stringWidth(title)/2, 95);
+
+        // יתרת מטבעות
+        team.model.MainPlayer player = UiPort.getInstance().getMainPlayer();
+        int coins = (player != null) ? player.getProgress().getCoins() : 0;
+        drawCoinLabel(g2d, "Balance:", coins, cx, 130);
+
+        // טאבים
+        Color[] tabAccents = { new Color(200, 165, 30), new Color(70, 160, 255) };
+        String[] tabLabels = { "WEAPONS", "ARMOR" };
+        int tabW = 155, tabH = 34, tabGap = 12;
+        int tabsX = cx - (tabW * 2 + tabGap) / 2;
+        for (int t = 0; t < 2; t++) {
+            int tx = tabsX + t * (tabW + tabGap);
+            boolean active = (t == shopPage);
+            g2d.setColor(active ? new Color(32, 26, 52) : new Color(18, 14, 30));
+            g2d.fillRoundRect(tx, 150, tabW, tabH, 10, 10);
+            g2d.setStroke(new BasicStroke(active ? 2.5f : 1f));
+            g2d.setColor(active ? tabAccents[t] : new Color(70, 65, 90));
+            g2d.drawRoundRect(tx, 150, tabW, tabH, 10, 10);
+            g2d.setFont(new Font("Arial", Font.BOLD, 14));
+            g2d.setColor(active ? tabAccents[t] : new Color(120, 115, 140));
+            g2d.drawString(tabLabels[t], tx + tabW/2 - g2d.getFontMetrics().stringWidth(tabLabels[t])/2, 173);
+        }
+
+        int cardY = 200, cardH = 215;
+
+        if (shopPage == 0) {
+            // --- טאב נשק ---
+            team.model.ShopItem[] items = team.model.ShopItem.values();
+            int n = items.length, gap = 14;
+            int cardW = Math.min(190, (w - 80 - gap * (n - 1)) / n);
+            int totalW = n * cardW + (n - 1) * gap;
+            int startX = cx - totalW / 2;
+
+            for (int i = 0; i < n; i++) {
+                team.model.ShopItem item = items[i];
+                int x = startX + i * (cardW + gap);
+                boolean canAfford = coins >= item.price;
+                Color accent = canAfford ? new Color(200, 165, 30) : new Color(65, 60, 85);
+
+                g2d.setColor(new Color(28, 22, 44));
+                g2d.fillRoundRect(x, cardY, cardW, cardH, 16, 16);
+                g2d.setStroke(new BasicStroke(canAfford ? 2f : 1.2f));
+                g2d.setColor(accent);
+                g2d.drawRoundRect(x, cardY, cardW, cardH, 16, 16);
+
+                g2d.setColor(canAfford ? new Color(255, 210, 50) : new Color(85, 80, 105));
+                g2d.fillRoundRect(x + cardW/2 - 20, cardY + 12, 40, 32, 8, 8);
+                g2d.setColor(new Color(20, 16, 34));
+                g2d.setFont(new Font("Arial", Font.BOLD, 20));
+                String num = String.valueOf(i + 1);
+                g2d.drawString(num, x + cardW/2 - g2d.getFontMetrics().stringWidth(num)/2, cardY + 34);
+
+                drawMiniSword(g2d, item.name, x + cardW/2, cardY + 74, canAfford);
+
+                g2d.setColor(canAfford ? Color.WHITE : new Color(125, 120, 145));
+                g2d.setFont(new Font("Arial", Font.BOLD, 14));
+                drawCenteredWrapped(g2d, item.name, x + cardW/2, cardY + 106, cardW - 12, g2d.getFontMetrics());
+
+                g2d.setFont(new Font("Arial", Font.BOLD, 15));
+                g2d.setColor(canAfford ? new Color(110, 220, 110) : new Color(80, 110, 80));
+                String str = "STR +" + item.strBonus;
+                g2d.drawString(str, x + cardW/2 - g2d.getFontMetrics().stringWidth(str)/2, cardY + 145);
+
+                drawPriceTag(g2d, item.price, coins, x + cardW/2, cardY + cardH - 16);
+            }
+
+            g2d.setFont(new Font("Arial", Font.PLAIN, 14));
+            g2d.setColor(new Color(160, 155, 180));
+            String hint = "Press 1–" + n + " to buy    Sword drops at your feet (Z to pick up)    TAB: Armor    B: Close";
+            g2d.drawString(hint, cx - g2d.getFontMetrics().stringWidth(hint)/2, cardY + cardH + 34);
+
+        } else {
+            // --- טאב שריון ---
+            team.model.ArmorSet[] sets = team.model.ArmorSet.values();
+            int n = sets.length, gap = 14;
+            int cardW = Math.min(190, (w - 80 - gap * (n - 1)) / n);
+            int totalW = n * cardW + (n - 1) * gap;
+            int startX = cx - totalW / 2;
+
+            for (int i = 0; i < n; i++) {
+                team.model.ArmorSet armor = sets[i];
+                int x = startX + i * (cardW + gap);
+                boolean canAfford = coins >= armor.price;
+                Color accent = canAfford ? new Color(70, 160, 255) : new Color(65, 60, 85);
+
+                g2d.setColor(new Color(22, 26, 44));
+                g2d.fillRoundRect(x, cardY, cardW, cardH, 16, 16);
+                g2d.setStroke(new BasicStroke(canAfford ? 2f : 1.2f));
+                g2d.setColor(accent);
+                g2d.drawRoundRect(x, cardY, cardW, cardH, 16, 16);
+
+                g2d.setColor(canAfford ? new Color(70, 160, 255) : new Color(85, 80, 105));
+                g2d.fillRoundRect(x + cardW/2 - 20, cardY + 12, 40, 32, 8, 8);
+                g2d.setColor(new Color(20, 16, 34));
+                g2d.setFont(new Font("Arial", Font.BOLD, 20));
+                String num = String.valueOf(i + 1);
+                g2d.drawString(num, x + cardW/2 - g2d.getFontMetrics().stringWidth(num)/2, cardY + 34);
+
+                drawMiniShield(g2d, armor.name, x + cardW/2, cardY + 74, canAfford);
+
+                g2d.setColor(canAfford ? Color.WHITE : new Color(125, 120, 145));
+                g2d.setFont(new Font("Arial", Font.BOLD, 13));
+                drawCenteredWrapped(g2d, armor.name, x + cardW/2, cardY + 104, cardW - 12, g2d.getFontMetrics());
+
+                int bx = x + 8, by = cardY + 124;
+                int col = canAfford ? 220 : 120;
+                g2d.setFont(new Font("Arial", Font.BOLD, 11));
+                if (armor.hpBonus  > 0) { g2d.setColor(new Color(col,55,55));    g2d.drawString("+"+armor.hpBonus +" HP",  bx, by);           }
+                if (armor.mpBonus  > 0) { g2d.setColor(new Color(55,110,col));   g2d.drawString("+"+armor.mpBonus +" MP",  x+cardW/2+4, by);   }
+                by += 15;
+                if (armor.strBonus > 0) { g2d.setColor(new Color(col,135,45));   g2d.drawString("+"+armor.strBonus+" STR", bx, by);            }
+                if (armor.defBonus > 0) { g2d.setColor(new Color(55,col,col));   g2d.drawString("+"+armor.defBonus+" DEF", x+cardW/2+4, by);   }
+
+                drawPriceTag(g2d, armor.price, coins, x + cardW/2, cardY + cardH - 16);
+            }
+
+            g2d.setFont(new Font("Arial", Font.PLAIN, 14));
+            g2d.setColor(new Color(160, 155, 180));
+            String hint = "Press 1–" + n + " to equip (applied instantly)    TAB: Weapons    B: Close";
+            g2d.drawString(hint, cx - g2d.getFontMetrics().stringWidth(hint)/2, cardY + cardH + 34);
+        }
+    }
+
+    // --- עזרי חנות ---
+
+    private void drawCoinLabel(Graphics2D g, String label, int coins, int cx, int y) {
+        g.setFont(new Font("Arial", Font.BOLD, 19));
+        g.setColor(new Color(200, 195, 220));
+        int lw = g.getFontMetrics().stringWidth(label);
+        g.drawString(label, cx - lw/2 - 46, y);
+        int cx2 = cx - lw/2 + 12;
+        g.setColor(new Color(170, 130, 20));  g.fillOval(cx2, y-16, 18, 18);
+        g.setColor(new Color(255, 215, 60));  g.fillOval(cx2+2, y-14, 14, 14);
+        g.setColor(new Color(140, 100, 10));  g.setFont(new Font("Arial", Font.BOLD, 10)); g.drawString("$", cx2+5, y-3);
+        g.setFont(new Font("Arial", Font.BOLD, 19));
+        g.setColor(new Color(255, 220, 80));  g.drawString(String.valueOf(coins), cx2+22, y);
+    }
+
+    private void drawPriceTag(Graphics2D g, int price, int coins, int cx, int y) {
+        if (coins >= price) {
+            int cix = cx - 34;
+            g.setColor(new Color(170, 130, 20)); g.fillOval(cix, y-14, 14, 14);
+            g.setColor(new Color(255, 215, 60)); g.fillOval(cix+2, y-12, 10, 10);
+            g.setColor(new Color(140, 100, 10)); g.setFont(new Font("Arial", Font.BOLD, 9)); g.drawString("$", cix+3, y-4);
+            g.setFont(new Font("Arial", Font.BOLD, 15)); g.setColor(new Color(255, 215, 60));
+            g.drawString(String.valueOf(price), cix+18, y);
+        } else {
+            g.setFont(new Font("Arial", Font.BOLD, 12)); g.setColor(new Color(180, 55, 55));
+            String s = "Need " + price;
+            g.drawString(s, cx - g.getFontMetrics().stringWidth(s)/2, y);
+        }
+    }
+
+    private void drawCenteredWrapped(Graphics2D g, String text, int cx, int y, int maxW, FontMetrics fm) {
+        if (fm.stringWidth(text) <= maxW) {
+            g.drawString(text, cx - fm.stringWidth(text)/2, y);
+        } else {
+            String[] parts = text.split(" ", 2);
+            g.drawString(parts[0], cx - fm.stringWidth(parts[0])/2, y - 8);
+            if (parts.length > 1) g.drawString(parts[1], cx - fm.stringWidth(parts[1])/2, y + 10);
+        }
+    }
+
+    // מיני-חרב בכרטיס חנות — עיצוב ייחודי לפי שם
+    private void drawMiniSword(Graphics2D g, String name, int cx, int cy, boolean bright) {
+        int a = bright ? 255 : 110;
+        switch (name) {
+            case "Worn Dagger":
+                g.setColor(new Color(120, 80, 45, a));  g.fillRect(cx-15,cy-2,10,5);
+                g.setColor(new Color(155, 120, 80, a)); g.fillRect(cx-5,cy-4,3,8);
+                g.setColor(new Color(155, 130, 100, a));g.fillRect(cx-2,cy-2,18,4);
+                g.setColor(new Color(135, 110, 85, a)); g.fillPolygon(new int[]{cx+16,cx+21,cx+16},new int[]{cy-2,cy,cy+2},3);
+                break;
+            case "Iron Sword":
+                g.setColor(new Color(95, 65, 38, a));   g.fillRect(cx-18,cy-2,10,5);
+                g.setColor(new Color(75, 75, 88, a));   g.fillRect(cx-8,cy-5,4,10);
+                g.setColor(new Color(185, 185, 195, a));g.fillRect(cx-4,cy-2,24,4);
+                g.setColor(new Color(215, 215, 230, a));g.fillPolygon(new int[]{cx+20,cx+26,cx+20},new int[]{cy-2,cy,cy+2},3);
+                break;
+            case "Silver Blade":
+                g.setColor(new Color(105, 75, 48, a));  g.fillRect(cx-20,cy-2,10,5);
+                g.setColor(new Color(95, 125, 165, a)); g.fillRect(cx-10,cy-5,4,10);
+                g.setColor(new Color(210, 215, 235, a));g.fillRect(cx-6,cy-2,27,4);
+                g.setColor(new Color(175, 210, 255, a));g.fillRect(cx-5,cy-1,25,2);
+                g.setColor(new Color(230, 242, 255, a));g.fillPolygon(new int[]{cx+21,cx+28,cx+21},new int[]{cy-2,cy,cy+2},3);
+                break;
+            case "Demon Blade":
+                g.setColor(new Color(75, 28, 28, a));   g.fillRect(cx-22,cy-2,10,5);
+                g.setColor(new Color(115, 18, 18, a));  g.fillRect(cx-12,cy-6,5,12);
+                g.setColor(new Color(78, 18, 18, a));   g.fillRect(cx-7,cy-2,30,5);
+                g.setColor(new Color(178, 28, 18, a));  g.fillRect(cx-7,cy-4,28,2);
+                for (int i=0;i<3;i++) { g.setColor(new Color(178,28,18,a)); g.fillRect(cx-4+i*8,cy-6,3,3); }
+                g.setColor(new Color(218, 48, 28, a));  g.fillPolygon(new int[]{cx+23,cx+30,cx+23},new int[]{cy-2,cy,cy+3},3);
+                if (bright) { g.setColor(new Color(255,30,10,40)); g.fillRoundRect(cx-8,cy-7,40,13,4,4); }
+                break;
+            default: // Void Reaver
+                g.setColor(new Color(48, 18, 75, a));   g.fillRect(cx-24,cy-2,10,5);
+                g.setColor(new Color(125, 58, 195, a)); g.fillRect(cx-14,cy-7,5,14);
+                g.setColor(new Color(33, 13, 58, a));   g.fillRect(cx-9,cy-2,33,5);
+                g.setColor(new Color(188, 118, 252, a));g.fillRect(cx-8,cy-1,31,2);
+                g.setColor(new Color(198, 138, 252, a));g.fillPolygon(new int[]{cx+24,cx+32,cx+24},new int[]{cy-2,cy,cy+3},3);
+                if (bright) { g.setColor(new Color(160,80,255,48)); g.fillRoundRect(cx-10,cy-8,44,15,5,5); }
+        }
+    }
+
+    // מיני-מגן בכרטיס שריון
+    private void drawMiniShield(Graphics2D g, String name, int cx, int cy, boolean bright) {
+        int a = bright ? 255 : 105;
+        Color fill, border, shine;
+        switch (name) {
+            case "Leather Set":   fill=new Color(135,85,48,a);  border=new Color(95,58,28,a);  shine=new Color(178,118,68,a);  break;
+            case "Chain Mail":    fill=new Color(115,120,132,a);border=new Color(75,82,92,a);  shine=new Color(178,183,198,a); break;
+            case "Battle Plate":  fill=new Color(75,88,108,a);  border=new Color(48,58,78,a);  shine=new Color(148,162,198,a); break;
+            case "Mage Robe":     fill=new Color(88,48,138,a);  border=new Color(58,28,98,a);  shine=new Color(178,128,252,a); break;
+            default:              fill=new Color(38,18,68,a);   border=new Color(98,48,178,a); shine=new Color(198,148,252,a); break;
+        }
+        int sw=26, sh=30;
+        g.setColor(fill);
+        g.fillRoundRect(cx-sw/2, cy-sh/2, sw, sh-6, 7, 7);
+        g.fillPolygon(new int[]{cx-sw/2,cx+sw/2,cx}, new int[]{cy+sh/2-12,cy+sh/2-12,cy+sh/2}, 3);
+        g.setStroke(new BasicStroke(1.8f));
+        g.setColor(border);
+        g.drawRoundRect(cx-sw/2, cy-sh/2, sw, sh-6, 7, 7);
+        g.drawLine(cx-sw/2, cy+sh/2-12, cx, cy+sh/2);
+        g.drawLine(cx+sw/2, cy+sh/2-12, cx, cy+sh/2);
+        g.setColor(shine);
+        g.fillOval(cx-4, cy-8, 8, 8);
+        g.drawLine(cx, cy, cx, cy+sh/2-14);
+    }
+
     private void renderGameOver(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -314,7 +566,7 @@ public class DrawingPanel extends JPanel {
     private Color  heroAccent(HeroType h){ return h == HeroType.MAGE ? new Color(150, 120, 255) : new Color(255, 165, 60); }
     private String[] heroSkills(HeroType h) {
         return h == HeroType.MAGE
-            ? new String[]{ "1  Basic Attack", "2  Fireball  (ranged magic)" }
+            ? new String[]{ "1  Basic Attack", "2  Fireball  (ranged magic)", "3  AquaBeam  (high dmg, 20 MP)" }
             : new String[]{ "1  Basic Attack", "2  Slash  (needs a sword)" };
     }
 
@@ -352,9 +604,9 @@ public class DrawingPanel extends JPanel {
         String sub = "Choose your hero";
         g2d.drawString(sub, (w - g2d.getFontMetrics().stringWidth(sub)) / 2, ty + 40);
 
-        // שני כרטיסים
+        // שני כרטיסים — הקוסם גבוה יותר (3 סקילים)
         HeroType[] heroes = HeroType.values();
-        int cardW = 230, cardH = 310, gap = 50;
+        int cardW = 230, cardH = 330, gap = 50;
         int totalW = heroes.length * cardW + (heroes.length - 1) * gap;
         int startX = (w - totalW) / 2;
         int cardY = ty + 75;
@@ -373,7 +625,7 @@ public class DrawingPanel extends JPanel {
 
         g2d.setFont(new Font("Arial", Font.PLAIN, 15));
         g2d.setColor(new Color(150, 145, 170));
-        String controls = "Arrows: Move    Up: Jump    Space: Attack    Z/X: Sword    1/2: Skill    C: Upgrades    M: Maps";
+        String controls = "Arrows: Move    Up: Jump    Space: Attack    Z/X: Sword    1/2/3: Skill    C: Upgrades    M: Maps    B: Shop";
         g2d.drawString(controls, (w - g2d.getFontMetrics().stringWidth(controls)) / 2, footY + 30);
     }
 
@@ -562,80 +814,220 @@ public class DrawingPanel extends JPanel {
         }
     }
 
-    // חרב ביד השחקן — מוצגת כשהשחקן אוחז בה, מסתובבת עם הכיוון
+    // חרב ביד השחקן — מסתובבת עם הכיוון, עיצוב ייחודי לפי שם החרב
     private void renderEquippedSword(Graphics g) {
         team.model.MainPlayer player = UiPort.getInstance().getMainPlayer();
         if (player == null || !player.hasSword()) return;
 
         Graphics2D g2d = (Graphics2D) g;
-        int px = (int) player.getX();
-        int py = (int) player.getY();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        boolean facingRight = player.isFacingRight();
-
+        String swordName = player.getEquippedSword().getName();
+        boolean right = player.isFacingRight();
         AffineTransform old = g2d.getTransform();
 
-        if (facingRight) {
-            // חרב לצד ימין, מסובבת -45 מעלות
+        int px = (int) player.getX(), py = (int) player.getY();
+        if (right) {
             g2d.translate(px + 39, py + 30);
             g2d.rotate(Math.toRadians(-35));
-
-            g2d.setColor(new Color(192, 192, 192));
-            g2d.fillRect(0, -3, 28, 6);
-
-            g2d.setColor(new Color(139, 90, 43));
-            g2d.fillRect(-8, -5, 10, 10);
-
-            g2d.setColor(new Color(220, 220, 255));
-            int[] xp = { 28, 36, 28 };
-            int[] yp = { -3,  0,  3 };
-            g2d.fillPolygon(xp, yp, 3);
         } else {
-            // חרב לצד שמאל, מסובבת -135 מעלות (הופכת כיוון)
             g2d.translate(px + 11, py + 30);
             g2d.rotate(Math.toRadians(-145));
-
-            g2d.setColor(new Color(192, 192, 192));
-            g2d.fillRect(0, -3, 28, 6);
-
-            g2d.setColor(new Color(139, 90, 43));
-            g2d.fillRect(-8, -5, 10, 10);
-
-            g2d.setColor(new Color(220, 220, 255));
-            int[] xp = { 28, 36, 28 };
-            int[] yp = { -3,  0,  3 };
-            g2d.fillPolygon(xp, yp, 3);
         }
 
+        drawEquippedSwordShape(g2d, swordName);
         g2d.setTransform(old);
+    }
+
+    // מציירת את צורת החרב כשהיא ביד — ממורכזת ב-(0,0), פונה ימינה
+    private void drawEquippedSwordShape(Graphics2D g, String name) {
+        switch (name) {
+            case "Worn Dagger": {
+                g.setColor(new Color(130, 95, 60));
+                g.fillRect(-8, -3, 8, 6);
+                g.setColor(new Color(155, 120, 80));
+                g.fillRect(0, -4, 3, 8);
+                g.setColor(new Color(160, 140, 110));
+                g.fillRect(3, -2, 18, 4);
+                g.setColor(new Color(140, 115, 90));
+                g.fillPolygon(new int[]{21, 25, 21}, new int[]{-2, 0, 2}, 3);
+                break;
+            }
+            case "Iron Sword": {
+                g.setColor(new Color(100, 70, 40));
+                g.fillRect(-10, -3, 10, 6);
+                g.setColor(new Color(80, 80, 90));
+                g.fillRect(0, -5, 4, 10);
+                g.setColor(new Color(185, 185, 195));
+                g.fillRect(4, -3, 26, 5);
+                g.setColor(new Color(220, 220, 230));
+                g.fillPolygon(new int[]{30, 36, 30}, new int[]{-3, 0, 3}, 3);
+                break;
+            }
+            case "Silver Blade": {
+                g.setColor(new Color(110, 80, 50));
+                g.fillRect(-10, -3, 10, 6);
+                g.setColor(new Color(100, 130, 170));
+                g.fillRect(0, -5, 4, 10);
+                g.setColor(new Color(210, 215, 235));
+                g.fillRect(4, -3, 28, 5);
+                g.setColor(new Color(180, 210, 255));
+                g.fillRect(5, -1, 26, 2);
+                g.setColor(new Color(235, 245, 255));
+                g.fillPolygon(new int[]{32, 39, 32}, new int[]{-3, 0, 3}, 3);
+                break;
+            }
+            case "Demon Blade": {
+                g.setColor(new Color(80, 30, 30));
+                g.fillRect(-10, -3, 10, 6);
+                g.setColor(new Color(120, 20, 20));
+                g.fillRect(0, -6, 5, 12);
+                g.setColor(new Color(80, 20, 20));
+                g.fillRect(5, -3, 32, 5);
+                g.setColor(new Color(180, 30, 20));
+                g.fillRect(5, -4, 30, 2);
+                for (int i = 0; i < 3; i++) g.fillRect(7+i*8, -6, 4, 4);
+                g.setColor(new Color(220, 50, 30));
+                g.fillPolygon(new int[]{37, 44, 37}, new int[]{-3, 0, 3}, 3);
+                g.setColor(new Color(255, 30, 10, 60));
+                g.fillRoundRect(4, -7, 42, 13, 4, 4);
+                break;
+            }
+            case "Void Reaver": {
+                g.setColor(new Color(50, 20, 80));
+                g.fillRect(-10, -3, 10, 6);
+                g.setColor(new Color(130, 60, 200));
+                g.fillRect(0, -7, 5, 14);
+                g.setColor(new Color(35, 15, 60));
+                g.fillRect(5, -3, 36, 5);
+                g.setColor(new Color(190, 120, 255));
+                g.fillRect(5, -1, 35, 2);
+                g.setColor(new Color(200, 140, 255));
+                g.fillPolygon(new int[]{41, 50, 41}, new int[]{-3, 0, 3}, 3);
+                g.setColor(new Color(160, 80, 255, 65));
+                g.fillRoundRect(4, -8, 48, 16, 5, 5);
+                break;
+            }
+            default: {
+                g.setColor(new Color(139, 90, 43));
+                g.fillRect(-8, -5, 10, 10);
+                g.setColor(new Color(192, 192, 192));
+                g.fillRect(0, -3, 28, 6);
+                g.setColor(new Color(220, 220, 255));
+                g.fillPolygon(new int[]{28, 36, 28}, new int[]{-3, 0, 3}, 3);
+            }
+        }
     }
 
     private void renderSword(Graphics g) {
         team.model.Sword sword = my_base.App.content().canvas().getSword();
         if (sword == null || !sword.isOnGround()) return;
-
         Graphics2D g2d = (Graphics2D) g;
-        int sx = (int) sword.getX();
-        int sy = (int) sword.getY();
-
-        // גוף החרב
-        g2d.setColor(new Color(192, 192, 192));
-        g2d.fillRect(sx, sy + 8, 30, 6);
-
-        // ידית
-        g2d.setColor(new Color(139, 90, 43));
-        g2d.fillRect(sx - 6, sy + 6, 10, 10);
-
-        // טיפ
-        g2d.setColor(new Color(220, 220, 255));
-        int[] xp = { sx + 30, sx + 38, sx + 30 };
-        int[] yp = { sy + 8,  sy + 11, sy + 14 };
-        g2d.fillPolygon(xp, yp, 3);
-
-        // תווית Z להרמה
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int sx = (int) sword.getX(), sy = (int) sword.getY() + 8;
+        drawSwordOnGround(g2d, sword.getName(), sx, sy);
         g2d.setColor(Color.YELLOW);
         g2d.setFont(new Font("Arial", Font.BOLD, 11));
-        g2d.drawString("[Z]", sx + 5, sy - 4);
+        g2d.drawString("[Z]", sx + 5, (int) sword.getY() - 4);
+    }
+
+    // מציירת חרב על הקרקע לפי שמה — כל חרב עם צורה וצבע ייחודיים
+    private void drawSwordOnGround(Graphics2D g, String name, int x, int y) {
+        Stroke old = g.getStroke();
+        switch (name) {
+            case "Worn Dagger": {
+                // פגיון קצר וחלוד
+                g.setColor(new Color(130, 95, 60));
+                g.fillRect(x, y + 2, 7, 5);            // ידית עץ
+                g.setColor(new Color(155, 120, 80));
+                g.fillRect(x + 7, y + 1, 3, 7);        // גארד
+                g.setColor(new Color(160, 140, 110));
+                g.fillRect(x + 10, y + 3, 16, 3);      // להב חלוד
+                g.setColor(new Color(140, 115, 90));
+                int[] tx = {x+26, x+30, x+26}; int[] ty = {y+3, y+4, y+6};
+                g.fillPolygon(tx, ty, 3);
+                break;
+            }
+            case "Iron Sword": {
+                // חרב ברזל קלאסית
+                g.setColor(new Color(100, 70, 40));
+                g.fillRect(x, y + 2, 10, 6);
+                g.setColor(new Color(80, 80, 90));
+                g.fillRect(x+10, y, 4, 9);             // גארד
+                g.setColor(new Color(185, 185, 195));
+                g.fillRect(x+14, y+2, 24, 5);
+                g.setColor(new Color(215, 215, 230));
+                int[] tx = {x+38, x+44, x+38}; int[] ty = {y+2, y+4, y+7};
+                g.fillPolygon(tx, ty, 3);
+                break;
+            }
+            case "Silver Blade": {
+                // להב כסף מבריק עם גוון כחלחל
+                g.setColor(new Color(110, 80, 50));
+                g.fillRect(x, y+2, 10, 6);
+                g.setColor(new Color(100, 130, 170));   // גארד כחול
+                g.fillRect(x+10, y, 4, 9);
+                g.setColor(new Color(210, 215, 235));
+                g.fillRect(x+14, y+2, 26, 5);
+                // שפיץ קדמי ועורק אמצע
+                g.setColor(new Color(180, 210, 255));
+                g.fillRect(x+16, y+3, 22, 2);          // קו אמצע כחלחל
+                g.setColor(new Color(230, 240, 255));
+                int[] tx = {x+40, x+47, x+40}; int[] ty = {y+2, y+4, y+7};
+                g.fillPolygon(tx, ty, 3);
+                break;
+            }
+            case "Demon Blade": {
+                // להב אדום-שחור מחורץ
+                g.setColor(new Color(80, 30, 30));
+                g.fillRect(x, y+2, 10, 6);
+                g.setColor(new Color(120, 20, 20));
+                g.fillRect(x+10, y-1, 5, 11);          // גארד רחב
+                g.setColor(new Color(80, 20, 20));
+                g.fillRect(x+15, y+2, 28, 5);
+                // שיניים
+                g.setColor(new Color(180, 30, 20));
+                g.fillRect(x+15, y+1, 28, 2);
+                for (int i = 0; i < 3; i++) {
+                    g.fillRect(x+17+i*8, y-1, 4, 4);   // שיניים על הגב
+                }
+                // עצה
+                g.setColor(new Color(220, 50, 30));
+                int[] tx = {x+43, x+50, x+43}; int[] ty = {y+2, y+4, y+7};
+                g.fillPolygon(tx, ty, 3);
+                // זוהר אדום
+                g.setColor(new Color(255, 30, 10, 50));
+                g.fillRect(x+14, y-2, 38, 13);
+                break;
+            }
+            case "Void Reaver": {
+                // להב קוסמי בסגול-שחור
+                g.setColor(new Color(50, 20, 80));
+                g.fillRect(x, y+2, 10, 6);
+                g.setColor(new Color(130, 60, 200));    // גארד סגול זוהר
+                g.fillRect(x+10, y-2, 5, 13);
+                g.setColor(new Color(35, 15, 60));
+                g.fillRect(x+15, y+2, 32, 5);
+                // קו סגול זוהר
+                g.setColor(new Color(190, 120, 255));
+                g.fillRect(x+15, y+3, 32, 2);
+                // עצה
+                g.setColor(new Color(200, 140, 255));
+                int[] tx = {x+47, x+55, x+47}; int[] ty = {y+2, y+4, y+7};
+                g.fillPolygon(tx, ty, 3);
+                // הילה
+                g.setColor(new Color(160, 80, 255, 55));
+                g.fillRoundRect(x+13, y-3, 44, 15, 6, 6);
+                break;
+            }
+            default: {
+                g.setColor(new Color(192, 192, 192));
+                g.fillRect(x, y, 30, 6);
+                g.setColor(new Color(139, 90, 43));
+                g.fillRect(x-6, y-2, 10, 10);
+            }
+        }
+        g.setStroke(old);
     }
 
     private final java.util.Map<EnemyType, Image> enemyImgCache = new java.util.HashMap<>();
@@ -793,6 +1185,8 @@ public class DrawingPanel extends JPanel {
             renderSlashAnimation(g, player);
         } else if ("Fireball".equals(anim)) {
             renderFireballAnimation(g, player);
+        } else if ("AquaBeam".equals(anim)) {
+            renderAquaBeamAnimation(g, player);
         } else {
             renderBasicAttackAnimation(g, player);
         }
@@ -834,6 +1228,70 @@ public class DrawingPanel extends JPanel {
         g2d.fillOval(cx - 7, y - 7, 14, 14);
         g2d.setColor(Color.WHITE);
         g2d.fillOval(cx - 3, y - 3, 6, 6);
+    }
+
+    // אנימציית AquaBeam — קרן לייזר כחולה רחבה עם הילה ופולסינג
+    private void renderAquaBeamAnimation(Graphics g, team.model.MainPlayer player) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        Stroke oldStroke = g2d.getStroke();
+
+        int ticks    = player.getAttackAnimationTicks();
+        int maxTicks = team.model.MainPlayer.ATTACK_ANIMATION_TICKS;
+        float progress = 1.0f - (float) ticks / maxTicks;   // 0→1 ככל שהאנימציה מתקדמת
+
+        boolean right = player.isFacingRight();
+        int dir    = right ? 1 : -1;
+        int originX = (int) player.getX() + (right ? 46 : 4);
+        int originY = (int) player.getY() + 22;
+
+        // הקרן מתארכת בהדרגה לאורך של 320px
+        int beamLength = (int) (320 * progress);
+        int endX = originX + dir * beamLength;
+
+        // שכבות הילה חיצוניות (כחול רחב + שקוף)
+        int[] widths = { 28, 18, 10, 5, 2 };
+        int[] alphas = { 30,  60, 110, 180, 255 };
+        Color[] cols = {
+            new Color(40, 140, 255),
+            new Color(80, 175, 255),
+            new Color(140, 210, 255),
+            new Color(210, 235, 255),
+            Color.WHITE
+        };
+        for (int i = 0; i < widths.length; i++) {
+            g2d.setStroke(new BasicStroke(widths[i], BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2d.setColor(new Color(cols[i].getRed(), cols[i].getGreen(), cols[i].getBlue(), alphas[i]));
+            g2d.drawLine(originX, originY, endX, originY);
+        }
+
+        // נצנוצים לאורך הקרן
+        for (int i = 1; i <= 7; i++) {
+            float frac = (float) i / 8;
+            if (frac > progress) break;
+            int sx = originX + (int) (dir * beamLength * frac);
+            int sparkleSz = (i % 2 == 0) ? 8 : 5;
+            int sparAlpha = 160 + (i % 3) * 30;
+            g2d.setColor(new Color(200, 235, 255, Math.min(255, sparAlpha)));
+            g2d.fillOval(sx - sparkleSz / 2, originY - sparkleSz / 2, sparkleSz, sparkleSz);
+        }
+
+        // נקודת מקור — עיגול אנרגיה ביד הקוסם
+        g2d.setColor(new Color(60, 160, 255, 200));
+        g2d.fillOval(originX - 9, originY - 9, 18, 18);
+        g2d.setColor(new Color(200, 240, 255, 230));
+        g2d.fillOval(originX - 5, originY - 5, 10, 10);
+
+        // פיצוץ בקצה (רק כשהקרן הגיעה לאורך מלא)
+        if (progress > 0.85f) {
+            int impactAlpha = (int) ((progress - 0.85f) / 0.15f * 255);
+            g2d.setColor(new Color(140, 210, 255, Math.min(255, impactAlpha)));
+            g2d.fillOval(endX - 14, originY - 14, 28, 28);
+            g2d.setColor(new Color(255, 255, 255, Math.min(200, impactAlpha)));
+            g2d.fillOval(endX - 7, originY - 7, 14, 14);
+        }
+
+        g2d.setStroke(oldStroke);
     }
 
     private void renderBasicAttackAnimation(Graphics g, team.model.MainPlayer player) {
@@ -938,10 +1396,11 @@ public class DrawingPanel extends JPanel {
         g2d.drawString(skillName, boxX + 8, boxY + 38);
     }
 
-    // צבע נושא לכל סקיל — Slash סגול, Fireball כתום, Basic כחול
+    // צבע נושא לכל סקיל
     private Color skillColor(String skillName) {
         if ("Slash Attack".equals(skillName)) return new Color(180, 100, 255);
         if ("Fireball".equals(skillName))     return new Color(255, 140, 50);
+        if ("AquaBeam".equals(skillName))     return new Color(60, 190, 255);
         return new Color(80, 180, 255);
     }
 
@@ -1046,6 +1505,11 @@ public class DrawingPanel extends JPanel {
 
         g2d.setColor(new Color(60, 200, 80));
         g2d.drawString("AGI: " + (int) stats.getAgility(), panelX + 10, panelY + 87);
+
+        if (stats.getDefense() > 0) {
+            g2d.setColor(new Color(60, 210, 220));
+            g2d.drawString("DEF: " + (int) stats.getDefense(), panelX + 10, panelY + 108);
+        }
 
         // קו מפריד
         g2d.setColor(new Color(255, 255, 255, 40));

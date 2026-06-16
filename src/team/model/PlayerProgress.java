@@ -23,6 +23,12 @@ public class PlayerProgress {
         if (amount > 0) coins += amount;
     }
 
+    public boolean spendCoins(int amount) {
+        if (coins < amount) return false;
+        coins -= amount;
+        return true;
+    }
+
     /**
      * מוסיף XP ומקדם רמות לפי הצורך.
      * @return מספר הרמות שעלו (0 אם לא עלתה רמה).

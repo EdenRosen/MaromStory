@@ -25,8 +25,13 @@ public class Canvas {
         mainPlayer = new MainPlayer(0, 150, 150);
         // סקיל שני (index 1) נקבע לפי הגיבור הנבחר
         switch (selectedHero) {
-            case WARRIOR: mainPlayer.addAttack(new SlashAttack());    break;
-            case MAGE:    mainPlayer.addAttack(new FireballAttack()); break;
+            case WARRIOR:
+                mainPlayer.addAttack(new SlashAttack());
+                break;
+            case MAGE:
+                mainPlayer.addAttack(new FireballAttack());
+                mainPlayer.addAttack(new AquaBeamAttack());
+                break;
         }
         buildWorld();
     }
@@ -106,6 +111,7 @@ public class Canvas {
     public Map getMap()               { return map; }
     public MainPlayer getMainPlayer() { return mainPlayer; }
     public Sword getSword()           { return sword; }
+    public void setSword(Sword s)     { sword = s; }
     public List<Enemy> getEnemies()   { return enemies; }
 
     // יצירת אויב מסוג נתון והוספתו לעולם — נקודה אחת לכל spawn

@@ -6,5 +6,6 @@ public enum GameState {
     PLAYING,
     UPGRADE,
     MAP_SELECT,
+    SHOP,
     GAME_OVER
 }

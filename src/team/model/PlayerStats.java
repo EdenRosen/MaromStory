@@ -14,6 +14,7 @@ public class PlayerStats {
     private double maxEnergy;
     private double strength;   // כוח — משפיע על נזק
     private double agility;    // זריזות — משפיעה על מהירות וקפיצה
+    private double defense = 0; // הגנה — מפחיתה נזק נכנס
 
     public PlayerStats(double maxHealth, double maxEnergy, double strength, double agility) {
         this.maxHealth = maxHealth;
@@ -29,8 +30,11 @@ public class PlayerStats {
     public double getHealth()    { return health; }
     public double getMaxHealth() { return maxHealth; }
 
+    public double getDefense()              { return defense; }
+    public void   increaseDefense(double d) { defense += d; }
+
     public void takeDamage(double amount) {
-        health = Math.max(0, health - amount);
+        health = Math.max(0, health - Math.max(1, amount - defense));
     }
 
     public void heal(double amount) {
