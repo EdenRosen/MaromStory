@@ -27,6 +27,8 @@ public abstract class Character extends IdentifiedObject {
     protected boolean facingRight = true;
     protected List<Attacks> attacks;
     protected int activeAttackIndex = 0;
+    protected int attackCooldownTicks = 0;            // טיקים שנותרו עד שאפשר לתקוף שוב
+    private static final double TICK_SECONDS = 0.03;  // לולאת המשחק רצה כל 30ms
 
     protected final PlayerStats stats;
     protected Sword equippedSword = null;
@@ -46,7 +48,8 @@ public abstract class Character extends IdentifiedObject {
 
     public void jump() {
         if (onGround) {
-            velocityY = JUMP_FORCE;
+            // זריזות מגבירה את כוח הקפיצה (ערך שלילי יותר = קפיצה גבוהה יותר)
+            velocityY = JUMP_FORCE - (stats.getAgility() - 5) * 0.35;
             onGround  = false;
         }
     }
@@ -54,6 +57,8 @@ public abstract class Character extends IdentifiedObject {
     // Pyhsics 
 
     public void update(List<MapRect> platforms) {
+        if (attackCooldownTicks > 0) attackCooldownTicks--;   // ספירת cooldown לתקיפה
+
         velocityY += GRAVITY;
         x += velocityX;
         y += velocityY;
@@ -86,15 +91,21 @@ public abstract class Character extends IdentifiedObject {
     }
     public boolean useAttack(int index, Character target) {
         if (index < 0 || index >= attacks.size()) return false;
+        if (attackCooldownTicks > 0) return false;            // עדיין ב-cooldown
         Attacks attack = attacks.get(index);
         if (attack.getMpCost() > stats.getEnergy()) return false;
         if (!attack.canExecute(this, target)) return false;
         attack.executeAttack(this, target);
         stats.useEnergy(attack.getMpCost());
+        // AGI מקצר קולדאון — כל נקודה מעל 5 מוריד 4% (מינימום 40% מהמקור)
+        double agiReduction = Math.max(0.4, 1.0 - (stats.getAgility() - 5) * 0.04);
+        attackCooldownTicks = (int) Math.round(attack.getCooldown() * agiReduction / TICK_SECONDS);
         return true;
     }
 
     public boolean isFacingRight() { return facingRight; }
+
+    public boolean isOnAttackCooldown() { return attackCooldownTicks > 0; }
 
     public void setActiveAttack(int index) {
         if (index >= 0 && index < attacks.size()) activeAttackIndex = index;

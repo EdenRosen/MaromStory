@@ -10,6 +10,7 @@ public class Canvas {
     private MainPlayer mainPlayer2;  // P2 (WASD in multiplayer, null in solo)
     private Sword sword;
     private List<Enemy> enemies;
+    private List<Sword> extraSwords = new ArrayList<>();  // Boss drops + additional floor items
 
     // הגיבור הנבחר — נשמר בין אתחולים (reset) ונקבע במסך הפתיחה
     private HeroType selectedHero = HeroType.WARRIOR;
@@ -70,11 +71,13 @@ public class Canvas {
     private void buildWorld() {
         map = new Map(0);
         enemies = new ArrayList<>();
+        extraSwords.clear();
         switch (currentMap) {
-            case MEADOW:  buildMeadow();  break;
-            case INFERNO: buildInferno(); break;
-            case FROST:   buildFrost();   break;
-            case VOID:    buildVoid();    break;
+            case MEADOW:      buildMeadow();     break;
+            case INFERNO:     buildInferno();    break;
+            case FROST:       buildFrost();      break;
+            case VOID:        buildVoid();       break;
+            case BOSS_ARENA:  buildBossArena();  break;
         }
     }
 
@@ -131,12 +134,29 @@ public class Canvas {
         spawnEnemy(3, 540, 430, EnemyType.COSMIC_HENRY);
     }
 
+    private void buildBossArena() {
+        // מגרש גדול ופתוח עם מגדלים בצדדים ומדרגות מרכזיות
+        map.addRectangle(new MapRect(0, 0,   500, 1200, 60));   // קרקע ראשית
+        map.addRectangle(new MapRect(0, 100, 250,  180, 30));   // מגדל שמאל
+        map.addRectangle(new MapRect(0, 950, 250,  180, 30));   // מגדל ימין
+        map.addRectangle(new MapRect(0, 460, 320,  280, 30));   // במה מרכזית
+        map.addRectangle(new MapRect(0, 240, 350,  160, 25));   // מדרגה שמאלית גבוהה
+        map.addRectangle(new MapRect(0, 780, 350,  160, 25));   // מדרגה ימנית גבוהה
+
+        sword = null;   // אין חרב מוכנה — קנה מהחנות לפני הכניסה
+
+        // הBOSS מוצב במרכז
+        spawnEnemy(1, 630, 430, EnemyType.FINAL_BOSS);
+    }
+
     public Map getMap()               { return map; }
     public MainPlayer getMainPlayer() { return mainPlayer1; }  // P1 (backward compatible)
     public MainPlayer getMainPlayer2() { return mainPlayer2; } // P2 (null in solo mode)
     public Sword getSword()           { return sword; }
     public void setSword(Sword s)     { sword = s; }
     public List<Enemy> getEnemies()   { return enemies; }
+    public List<Sword> getExtraSwords()   { return extraSwords; }
+    public void addExtraSword(Sword s)    { extraSwords.add(s); }
 
     // יצירת אויב מסוג נתון והוספתו לעולם — נקודה אחת לכל spawn
     public Enemy spawnEnemy(int id, double x, double y, EnemyType type) {

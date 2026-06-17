@@ -69,9 +69,10 @@ public class SystemRouter implements SubRouter {
                 switch (key) {
                     case "left":
                     case "right":
+                        backend.stopMove();
+                        break;
                     case "left_p2":
                     case "right_p2":
-                        backend.stopMove(); 
                         backend.stopMove_p2();
                         break;
                 }

@@ -21,6 +21,11 @@ public class MainPlayer extends Character {
 
     public PlayerProgress getProgress() { return progress; }
 
+    // מהירות תנועה מושפעת מזריזות — כל נקודת AGI מעל הבסיס מוסיפה מעט מהירות
+    public double getMoveSpeed() {
+        return MOVE_SPEED + (getStats().getAgility() - 5) * 0.35;
+    }
+
     // --- תנועה --- עם עדכון כיוון
 
     @Override

@@ -6,9 +6,9 @@ package team.model;
  */
 public class FireballAttack implements Attacks {
 
-    private static final double BASE_DAMAGE = 25;
-    private static final double COOLDOWN    = 1.0;
-    private static final double MP_COST     = 12.0;
+    private static final double BASE_DAMAGE = 40;
+    private static final double COOLDOWN    = 0.7;
+    private static final double MP_COST     = 10.0;
 
     @Override
     public void executeAttack(Character attacker, Character target) {

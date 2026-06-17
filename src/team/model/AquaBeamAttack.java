@@ -6,12 +6,12 @@ package team.model;
  */
 public class AquaBeamAttack implements Attacks {
 
-    private static final double BASE_DAMAGE = 40;
-    private static final double MP_COST     = 20.0;
+    private static final double BASE_DAMAGE = 65;
+    private static final double MP_COST     = 15.0;
 
     @Override
     public void executeAttack(Character attacker, Character target) {
-        double damage = BASE_DAMAGE + attacker.getStats().getStrength() * 1.2;
+        double damage = BASE_DAMAGE + attacker.getStats().getStrength() * 1.5;
         target.takeDamage(damage);
     }
 
@@ -22,7 +22,7 @@ public class AquaBeamAttack implements Attacks {
     public double getAttackRange() { return MainPlayer.ATTACK_RANGE * 3.5; }
 
     @Override
-    public double getCooldown() { return 1.2; }
+    public double getCooldown() { return 0.9; }
 
     @Override
     public double getMpCost() { return MP_COST; }

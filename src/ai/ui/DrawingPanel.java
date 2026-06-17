@@ -173,7 +173,7 @@ public class DrawingPanel extends JPanel {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         MapType m = App.content().canvas().getCurrentMap();
-        String label = "Map: " + m.displayName + "    [M] maps";
+        String label = "Map: " + m.displayName + "    [B] maps";
         g2d.setFont(new Font("Arial", Font.BOLD, 15));
         FontMetrics fm = g2d.getFontMetrics();
         int tw = fm.stringWidth(label);
@@ -205,15 +205,15 @@ public class DrawingPanel extends JPanel {
                                  : "No points — defeat enemies to earn XP";
         g2d.drawString(sub, cx - g2d.getFontMetrics().stringWidth(sub) / 2, h / 2 - 105);
 
-        String[] keys  = { "1", "2", "3" };
-        String[] descs = { "+20 Max HP", "+10 Max MP", "+3 STR" };
-        Color[]  acc   = { new Color(60, 200, 80), new Color(80, 160, 240), new Color(240, 150, 50) };
+        String[] keys  = { "1", "2", "3", "4" };
+        String[] descs = { "+20 Max HP", "+10 Max MP", "+3 STR", "+2 AGI" };
+        Color[]  acc   = { new Color(60, 200, 80), new Color(80, 160, 240), new Color(240, 150, 50), new Color(60, 200, 200) };
 
-        int cardW = 190, cardH = 130, gap = 28;
-        int totalW = 3 * cardW + 2 * gap;
+        int cardW = 170, cardH = 130, gap = 24;
+        int totalW = keys.length * cardW + (keys.length - 1) * gap;
         int startX = cx - totalW / 2, cardY = h / 2 - 60;
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < keys.length; i++) {
             int x = startX + i * (cardW + gap);
             g2d.setColor(new Color(30, 26, 52));
             g2d.fillRoundRect(x, cardY, cardW, cardH, 18, 18);
@@ -235,7 +235,7 @@ public class DrawingPanel extends JPanel {
 
         g2d.setColor(new Color(160, 155, 180));
         g2d.setFont(new Font("Arial", Font.PLAIN, 16));
-        String hint = pending > 0 ? "Press 1 / 2 / 3 to spend a point        C to close"
+        String hint = pending > 0 ? "Press 1 / 2 / 3 / 4 to spend a point        C to close"
                                   : "Press C to close";
         g2d.drawString(hint, cx - g2d.getFontMetrics().stringWidth(hint) / 2, cardY + cardH + 42);
     }
@@ -321,11 +321,12 @@ public class DrawingPanel extends JPanel {
 
     private Color mapAccent(MapType m) {
         switch (m) {
-            case MEADOW:  return new Color(90, 200, 110);
-            case INFERNO: return new Color(255, 110, 50);
-            case FROST:   return new Color(120, 200, 255);
-            case VOID:    return new Color(175, 110, 255);
-            default:      return new Color(200, 200, 200);
+            case MEADOW:      return new Color(90, 200, 110);
+            case INFERNO:     return new Color(255, 110, 50);
+            case FROST:       return new Color(120, 200, 255);
+            case VOID:        return new Color(175, 110, 255);
+            case BOSS_ARENA:  return new Color(255, 200, 30);
+            default:          return new Color(200, 200, 200);
         }
     }
 
@@ -416,7 +417,7 @@ public class DrawingPanel extends JPanel {
 
             g2d.setFont(new Font("Arial", Font.PLAIN, 14));
             g2d.setColor(new Color(160, 155, 180));
-            String hint = "Press 1–" + n + " to buy    Sword drops at your feet (Z to pick up)    TAB: Armor    B: Close";
+            String hint = "Press 1–" + n + " to buy    Sword drops at your feet (N to pick up)    TAB: Armor    /: Close";
             g2d.drawString(hint, cx - g2d.getFontMetrics().stringWidth(hint)/2, cardY + cardH + 34);
 
         } else {
@@ -466,7 +467,7 @@ public class DrawingPanel extends JPanel {
 
             g2d.setFont(new Font("Arial", Font.PLAIN, 14));
             g2d.setColor(new Color(160, 155, 180));
-            String hint = "Press 1–" + n + " to equip (applied instantly)    TAB: Weapons    B: Close";
+            String hint = "Press 1–" + n + " to equip (applied instantly)    TAB: Weapons    /: Close";
             g2d.drawString(hint, cx - g2d.getFontMetrics().stringWidth(hint)/2, cardY + cardH + 34);
         }
     }
@@ -970,13 +971,16 @@ public class DrawingPanel extends JPanel {
         }
     }
 
-    // חרב ביד השחקן — מסתובבת עם הכיוון, עיצוב ייחודי לפי שם החרב
+    // חרב ביד השחקן — מסתובבת עם הכיוון, עיצוב ייחודי לפי שם החרב. מצויר לשני השחקנים
     private void renderEquippedSword(Graphics g) {
-        team.model.MainPlayer player = UiPort.getInstance().getMainPlayer();
-        if (player == null || !player.hasSword()) return;
-
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        drawEquippedSwordFor(g2d, UiPort.getInstance().getMainPlayer());
+        drawEquippedSwordFor(g2d, UiPort.getInstance().getMainPlayer2());
+    }
+
+    private void drawEquippedSwordFor(Graphics2D g2d, team.model.MainPlayer player) {
+        if (player == null || !player.hasSword()) return;
 
         String swordName = player.getEquippedSword().getName();
         boolean right = player.isFacingRight();
@@ -1064,6 +1068,76 @@ public class DrawingPanel extends JPanel {
                 g.fillRoundRect(4, -8, 48, 16, 5, 5);
                 break;
             }
+            case "Soul Sever": {
+                g.setColor(new Color(60, 30, 10));
+                g.fillRect(-10, -3, 10, 6);
+                g.setColor(new Color(255, 180, 30));
+                g.fillRect(0, -7, 5, 14);
+                g.setColor(new Color(190, 145, 15));
+                g.fillRect(5, -3, 40, 6);
+                g.setColor(new Color(255, 220, 80));
+                g.fillRect(5, -1, 40, 2);
+                g.fillPolygon(new int[]{45, 55, 45}, new int[]{-3, 0, 3}, 3);
+                g.setColor(new Color(255, 200, 50, 80));
+                g.fillRoundRect(4, -8, 52, 16, 6, 6);
+                break;
+            }
+            case "Chaos Blade": {
+                g.setColor(new Color(40, 10, 10));
+                g.fillRect(-10, -3, 10, 6);
+                g.setColor(new Color(200, 80, 20));
+                g.fillRect(0, -7, 6, 14);
+                g.setColor(new Color(90, 18, 10));
+                g.fillRect(6, -3, 38, 6);
+                g.setColor(new Color(255, 100, 30));
+                g.fillRect(6, -4, 36, 2);
+                for (int i = 0; i < 4; i++) g.fillRect(8+i*8, -6, 4, 4);
+                g.setColor(new Color(220, 60, 25));
+                g.fillPolygon(new int[]{44, 53, 44}, new int[]{-3, 0, 3}, 3);
+                g.setColor(new Color(255, 60, 0, 60));
+                g.fillRoundRect(5, -8, 50, 14, 4, 4);
+                break;
+            }
+            case "Wraith Edge": {
+                g.setColor(new Color(20, 40, 50));
+                g.fillRect(-10, -3, 10, 6);
+                g.setColor(new Color(100, 210, 220));
+                g.fillRect(0, -6, 5, 12);
+                g.setColor(new Color(30, 70, 80));
+                g.fillRect(5, -3, 36, 6);
+                g.setColor(new Color(150, 230, 240));
+                g.fillRect(5, -1, 36, 2);
+                g.fillPolygon(new int[]{41, 49, 41}, new int[]{-3, 0, 3}, 3);
+                g.setColor(new Color(100, 200, 220, 65));
+                g.fillRoundRect(4, -7, 47, 14, 5, 5);
+                break;
+            }
+            case "Bone Crusher": {
+                g.setColor(new Color(50, 35, 20));
+                g.fillRect(-10, -3, 12, 6);
+                g.setColor(new Color(200, 185, 150));
+                g.fillRect(2, -7, 7, 14);
+                g.setColor(new Color(150, 135, 100));
+                g.fillRect(9, -4, 32, 8);
+                g.setColor(new Color(220, 205, 170));
+                g.fillRect(9, -2, 32, 3);
+                g.fillPolygon(new int[]{41, 50, 41}, new int[]{-4, 0, 4}, 3);
+                break;
+            }
+            case "Eternal Lance": {
+                g.setColor(new Color(20, 50, 20));
+                g.fillRect(-10, -2, 10, 5);
+                g.setColor(new Color(50, 180, 80));
+                g.fillRect(0, -5, 4, 10);
+                g.setColor(new Color(20, 100, 30));
+                g.fillRect(4, -3, 46, 5);
+                g.setColor(new Color(80, 220, 100));
+                g.fillRect(4, -1, 46, 2);
+                g.fillPolygon(new int[]{50, 62, 50}, new int[]{-3, 0, 3}, 3);
+                g.setColor(new Color(50, 200, 70, 55));
+                g.fillRoundRect(3, -6, 60, 12, 4, 4);
+                break;
+            }
             default: {
                 g.setColor(new Color(139, 90, 43));
                 g.fillRect(-8, -5, 10, 10);
@@ -1076,15 +1150,27 @@ public class DrawingPanel extends JPanel {
     }
 
     private void renderSword(Graphics g) {
-        team.model.Sword sword = my_base.App.content().canvas().getSword();
-        if (sword == null || !sword.isOnGround()) return;
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        int sx = (int) sword.getX(), sy = (int) sword.getY() + 8;
-        drawSwordOnGround(g2d, sword.getName(), sx, sy);
-        g2d.setColor(Color.YELLOW);
-        g2d.setFont(new Font("Arial", Font.BOLD, 11));
-        g2d.drawString("[Z]", sx + 5, (int) sword.getY() - 4);
+
+        team.model.Sword sword = my_base.App.content().canvas().getSword();
+        if (sword != null && sword.isOnGround()) {
+            int sx = (int) sword.getX(), sy = (int) sword.getY() + 8;
+            drawSwordOnGround(g2d, sword.getName(), sx, sy);
+            g2d.setColor(Color.YELLOW);
+            g2d.setFont(new Font("Arial", Font.BOLD, 11));
+            g2d.drawString("[N]", sx + 5, (int) sword.getY() - 4);
+        }
+
+        // חפצי Boss ופריטים נוספים על הקרקע
+        for (team.model.Sword s : my_base.App.content().canvas().getExtraSwords()) {
+            if (!s.isOnGround()) continue;
+            int sx = (int) s.getX(), sy = (int) s.getY() + 8;
+            drawSwordOnGround(g2d, s.getName(), sx, sy);
+            g2d.setColor(Color.YELLOW);
+            g2d.setFont(new Font("Arial", Font.BOLD, 11));
+            g2d.drawString("[N]", sx + 5, (int) s.getY() - 4);
+        }
     }
 
     // מציירת חרב על הקרקע לפי שמה — כל חרב עם צורה וצבע ייחודיים
@@ -1176,6 +1262,90 @@ public class DrawingPanel extends JPanel {
                 g.fillRoundRect(x+13, y-3, 44, 15, 6, 6);
                 break;
             }
+            case "Soul Sever": {
+                // להב זהב-נשמות עם הילה בוהקת
+                g.setColor(new Color(60, 30, 10));
+                g.fillRect(x, y+2, 10, 6);
+                g.setColor(new Color(255, 180, 30));
+                g.fillRect(x+10, y-2, 5, 13);
+                g.setColor(new Color(200, 155, 20));
+                g.fillRect(x+15, y+1, 36, 7);
+                g.setColor(new Color(255, 220, 80));
+                g.fillRect(x+15, y+3, 36, 2);
+                int[] tx2 = {x+51, x+59, x+51}; int[] ty2 = {y+1, y+4, y+8};
+                g.setColor(new Color(255, 220, 80));
+                g.fillPolygon(tx2, ty2, 3);
+                g.setColor(new Color(255, 200, 50, 75));
+                g.fillRoundRect(x+13, y-3, 48, 16, 7, 7);
+                break;
+            }
+            case "Chaos Blade": {
+                // להב אש-כאוס אדום-כתום עם שיניים
+                g.setColor(new Color(40, 10, 10));
+                g.fillRect(x, y+2, 10, 6);
+                g.setColor(new Color(200, 80, 20));
+                g.fillRect(x+10, y-2, 6, 13);
+                g.setColor(new Color(100, 20, 10));
+                g.fillRect(x+16, y+1, 34, 7);
+                g.setColor(new Color(255, 100, 30));
+                g.fillRect(x+16, y+1, 34, 3);
+                for (int i = 0; i < 4; i++) { g.setColor(new Color(255, 80, 20)); g.fillRect(x+18+i*7, y-1, 3, 4); }
+                int[] tx3 = {x+50, x+58, x+50}; int[] ty3 = {y+1, y+4, y+8};
+                g.setColor(new Color(255, 80, 20));
+                g.fillPolygon(tx3, ty3, 3);
+                g.setColor(new Color(255, 60, 0, 60));
+                g.fillRoundRect(x+14, y-3, 46, 14, 5, 5);
+                break;
+            }
+            case "Wraith Edge": {
+                // להב רוח ציאן-לבן שקוף
+                g.setColor(new Color(20, 40, 50));
+                g.fillRect(x, y+2, 10, 6);
+                g.setColor(new Color(100, 210, 220));
+                g.fillRect(x+10, y-2, 5, 13);
+                g.setColor(new Color(30, 70, 80));
+                g.fillRect(x+15, y+1, 32, 7);
+                g.setColor(new Color(150, 230, 240));
+                g.fillRect(x+15, y+3, 32, 2);
+                int[] tx4 = {x+47, x+54, x+47}; int[] ty4 = {y+1, y+4, y+8};
+                g.setColor(new Color(180, 240, 255));
+                g.fillPolygon(tx4, ty4, 3);
+                g.setColor(new Color(100, 200, 220, 65));
+                g.fillRoundRect(x+13, y-3, 43, 13, 6, 6);
+                break;
+            }
+            case "Bone Crusher": {
+                // להב עצמות כבד וגס
+                g.setColor(new Color(50, 35, 20));
+                g.fillRect(x, y+2, 12, 6);
+                g.setColor(new Color(200, 185, 150));
+                g.fillRect(x+12, y-2, 7, 13);
+                g.setColor(new Color(155, 140, 105));
+                g.fillRect(x+19, y, 30, 9);
+                g.setColor(new Color(220, 205, 170));
+                g.fillRect(x+19, y+1, 30, 3);
+                int[] tx5 = {x+49, x+57, x+49}; int[] ty5 = {y, y+4, y+9};
+                g.setColor(new Color(235, 220, 190));
+                g.fillPolygon(tx5, ty5, 3);
+                break;
+            }
+            case "Eternal Lance": {
+                // להב ירוק-אמרלד ארוך ויפה
+                g.setColor(new Color(20, 50, 20));
+                g.fillRect(x, y+3, 10, 4);
+                g.setColor(new Color(50, 180, 80));
+                g.fillRect(x+10, y-1, 4, 11);
+                g.setColor(new Color(20, 100, 30));
+                g.fillRect(x+14, y+2, 40, 5);
+                g.setColor(new Color(80, 220, 100));
+                g.fillRect(x+14, y+3, 40, 2);
+                int[] tx6 = {x+54, x+64, x+54}; int[] ty6 = {y+2, y+4, y+7};
+                g.setColor(new Color(100, 255, 120));
+                g.fillPolygon(tx6, ty6, 3);
+                g.setColor(new Color(50, 200, 70, 55));
+                g.fillRoundRect(x+12, y-2, 54, 13, 5, 5);
+                break;
+            }
             default: {
                 g.setColor(new Color(192, 192, 192));
                 g.fillRect(x, y, 30, 6);
@@ -1203,6 +1373,7 @@ public class DrawingPanel extends JPanel {
             case YETI_HENRY:    base = ENEMY_HENRY3; tint = new Color(185, 230, 255); break;
             case VOID_HENRY:    base = ENEMY_HENRY2; tint = new Color(175, 95, 255);  break;
             case COSMIC_HENRY:  base = ENEMY_HENRY3; tint = new Color(140, 70, 255);  break;
+            case FINAL_BOSS:    base = ENEMY_HENRY3; tint = new Color(255, 180, 0);   break;
             default:            base = ENEMY_HENRY1; tint = null; break;
         }
         if (tint == null) { enemyImgCache.put(type, base); return base; }
@@ -1229,7 +1400,8 @@ public class DrawingPanel extends JPanel {
 
     private boolean isBigEnemy(EnemyType t) {
         return t == EnemyType.GIANT_HENRY || t == EnemyType.DOOM_HENRY
-            || t == EnemyType.YETI_HENRY  || t == EnemyType.COSMIC_HENRY;
+            || t == EnemyType.YETI_HENRY  || t == EnemyType.COSMIC_HENRY
+            || t == EnemyType.FINAL_BOSS;
     }
 
     private Color enemyAura(EnemyType t) {
@@ -1237,6 +1409,7 @@ public class DrawingPanel extends JPanel {
             case INFERNO_HENRY: case DOOM_HENRY:   return new Color(255, 60, 20);
             case FROST_HENRY:   case YETI_HENRY:   return new Color(120, 200, 255);
             case VOID_HENRY:    case COSMIC_HENRY: return new Color(175, 95, 255);
+            case FINAL_BOSS:                       return new Color(255, 200, 30);
             default: return null;
         }
     }
@@ -1561,7 +1734,8 @@ public class DrawingPanel extends JPanel {
         // כיתוב
         g2d.setFont(new Font("Arial", Font.BOLD, 11));
         g2d.setColor(Color.LIGHT_GRAY);
-        g2d.drawString("Active Skill [1/2]:", boxX + 8, boxY + 17);
+        String skillKeys = selectedHero() == HeroType.MAGE ? "[1/2/3]" : "[1/2]";
+        g2d.drawString("Active Skill " + skillKeys + ":", boxX + 8, boxY + 17);
 
         g2d.setFont(new Font("Arial", Font.BOLD, 14));
         g2d.setColor(theme.brighter());
