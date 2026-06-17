@@ -8,7 +8,7 @@ public class AquaBeam implements Attacks {
 
     private static final double BASE_DAMAGE = 100;
     private static final double COOLDOWN    = 20;
-    private static final double MP_COST     = 100;
+    private static final double MP_COST     = 1;
 
     @Override
     public void executeAttack(Character attacker, Character target) {
