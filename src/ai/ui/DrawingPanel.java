@@ -9,10 +9,12 @@ import javax.swing.*;
 import my_base.App;
 import shared.MainRouter;
 import shared.ui_ports.UiPort;
+import team.control.GameState;
 import team.model.EnemyType;
+import team.model.GameMode;
 import team.model.HeroType;
-import team.model.MapType;
 import team.model.MapRect;
+import team.model.MapType;
 
 public class DrawingPanel extends JPanel {
     private static final String BACKGROUND_IMAGE_ID = "99";
@@ -59,30 +61,71 @@ public class DrawingPanel extends JPanel {
             @Override
             public void mousePressed(MouseEvent e) {
                 requestFocusInWindow();
+                
+                // Handle clicks on start screen cards
+                GameState state = App.content().backend().getState();
+                if (state == GameState.START_SCREEN) {
+                    handleHeroCardClick(e.getX(), e.getY());
+                } else if (state == GameState.GAME_MODE_SELECT) {
+                    handleModeCardClick(e.getX(), e.getY());
+                }
             }
         });
     }
 
     private String getKeyName(int keyCode) {
         switch (keyCode) {
+            // Player 1 (Arrow Keys)
             case KeyEvent.VK_UP:    return "up";
             case KeyEvent.VK_DOWN:  return "down";
             case KeyEvent.VK_LEFT:  return "left";
             case KeyEvent.VK_RIGHT: return "right";
-            case KeyEvent.VK_Z:     return "pickup";
-            case KeyEvent.VK_X:     return "throw";
-            case KeyEvent.VK_SPACE:  return "attack";
-            case KeyEvent.VK_C:      return "upgradePanel";
-            case KeyEvent.VK_1:      return "skill1";
-            case KeyEvent.VK_2:      return "skill2";
-            case KeyEvent.VK_3:      return "skill3";
-            case KeyEvent.VK_4:      return "skill4";
-            case KeyEvent.VK_5:      return "skill5";
-            case KeyEvent.VK_M:      return "mapSelect";
-            case KeyEvent.VK_B:      return "shop";
-            case KeyEvent.VK_TAB:    return App.content().backend().isShop() ? "shopTab" : "selectHero";
-            case KeyEvent.VK_ENTER:  return "start";
+            
+            // Player 2 (WASD)
+            case KeyEvent.VK_W:     return "up_p2";
+            case KeyEvent.VK_A:     return "left_p2";
+            case KeyEvent.VK_S:     return "down_p2";
+            case KeyEvent.VK_D:     return "right_p2";
+            
+            // Player 1 actions
+            case KeyEvent.VK_SPACE: return "attack";       // P1 attack
+            case KeyEvent.VK_N:     return "pickup";       // P1 pickup
+            case KeyEvent.VK_M:     return "throw";        // P1 throw
+            
+            // Player 2 actions
+            case KeyEvent.VK_R:     return "attack_p2";    // P2 attack
+            case KeyEvent.VK_Q:     return "pickup_p2";    // P2 pickup
+            case KeyEvent.VK_E:     return "throw_p2";     // P2 throw
+            
+            // Shared menu controls
+            case KeyEvent.VK_C:     return "upgradePanel";
+            case KeyEvent.VK_1:     return "skill1";
+            case KeyEvent.VK_2:     return "skill2";
+            case KeyEvent.VK_3:     return "skill3";
+            case KeyEvent.VK_4:     return "skill4";
+            case KeyEvent.VK_5:     return "skill5";
+            case KeyEvent.VK_B:     return "mapSelect";
+            case KeyEvent.VK_SLASH: return "shop";         // Changed from VK_M (now used for throw)
+            
+            // Selection / Navigation
+            case KeyEvent.VK_TAB:   return getTabKeyName();
+            case KeyEvent.VK_ENTER: return "start";
+            
             default: return null;
+        }
+    }
+    
+    private String getTabKeyName() {
+        // TAB behavior depends on state
+        switch (App.content().backend().getState()) {
+            case START_SCREEN:
+                return "selectHero";
+            case GAME_MODE_SELECT:
+                return "selectGameMode";
+            case SHOP:
+                return "shopTab";
+            default:
+                return null;
         }
     }
 
@@ -92,7 +135,13 @@ public class DrawingPanel extends JPanel {
         try { UiPort.getInstance(); } catch (IllegalStateException e) { return; }
 
         if (!gameStarted) {
-            renderStartScreen(g);
+            // Before game starts, show either hero selection or mode selection
+            GameState state = App.content().backend().getState();
+            if (state == GameState.GAME_MODE_SELECT) {
+                renderGameModeSelect(g);
+            } else {
+                renderStartScreen(g);
+            }
             return;
         }
 
@@ -619,14 +668,121 @@ public class DrawingPanel extends JPanel {
         // כיתובי הוראות
         int footY = cardY + cardH + 55;
         g2d.setFont(new Font("Arial", Font.BOLD, 22));
-        String go = "ENTER  —  Start            TAB  —  Switch Hero";
+        String go = "ENTER or CLICK  —  Start            TAB  —  Switch Hero";
         g2d.setColor(new Color(255, 224, 120));
         g2d.drawString(go, (w - g2d.getFontMetrics().stringWidth(go)) / 2, footY);
 
         g2d.setFont(new Font("Arial", Font.PLAIN, 15));
         g2d.setColor(new Color(150, 145, 170));
-        String controls = "Arrows: Move    Up: Jump    Space: Attack    Z/X: Sword    1/2/3: Skill    C: Upgrades    M: Maps    B: Shop";
+        String controls = "Arrows: Move    Up: Jump    Space: Attack    N: Pickup    M: Throw    1/2/3: Skill    C: Upgrades    B: Maps    /: Shop";
         g2d.drawString(controls, (w - g2d.getFontMetrics().stringWidth(controls)) / 2, footY + 30);
+    }
+
+    private void renderGameModeSelect(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+        int w = getWidth(), h = getHeight();
+
+        // Background — vertical gradient with stars
+        g2d.setPaint(new GradientPaint(0, 0, new Color(18, 12, 34), 0, h, new Color(36, 24, 64)));
+        g2d.fillRect(0, 0, w, h);
+        g2d.setColor(new Color(255, 255, 255, 22));
+        for (int i = 0; i < 70; i++) {
+            int sx = (i * 97 + 13) % w;
+            int sy = (i * 53 + 29) % (h / 2);
+            int s = (i % 3 == 0) ? 2 : 1;
+            g2d.fillOval(sx, sy, s, s);
+        }
+
+        // Title
+        g2d.setFont(new Font("Arial", Font.BOLD, 60));
+        String title = "MaromQuest";
+        FontMetrics fm = g2d.getFontMetrics();
+        int tx = (w - fm.stringWidth(title)) / 2;
+        int ty = 110;
+        g2d.setColor(new Color(255, 180, 40, 60));
+        g2d.drawString(title, tx + 2, ty + 2);
+        g2d.setColor(new Color(255, 212, 64));
+        g2d.drawString(title, tx, ty);
+
+        g2d.setFont(new Font("Arial", Font.PLAIN, 22));
+        g2d.setColor(new Color(200, 195, 220));
+        String sub = "Choose game mode";
+        g2d.drawString(sub, (w - g2d.getFontMetrics().stringWidth(sub)) / 2, ty + 40);
+
+        // Two mode cards: SOLO and MULTIPLAYER
+        GameMode selectedMode = App.content().canvas().getSelectedGameMode();
+        int cardW = 250, cardH = 280, gap = 60;
+        int totalW = 2 * cardW + gap;
+        int startX = (w - totalW) / 2;
+        int cardY = ty + 75;
+
+        renderModeCard(g2d, "SOLO", "Single Player", startX, cardY, cardW, cardH, selectedMode == GameMode.SOLO);
+        renderModeCard(g2d, "MULTIPLAYER", "2 Players", startX + cardW + gap, cardY, cardW, cardH, selectedMode == GameMode.MULTIPLAYER);
+
+        // Instructions
+        int footY = cardY + cardH + 55;
+        g2d.setFont(new Font("Arial", Font.BOLD, 22));
+        String go = "ENTER or CLICK  —  Start            TAB  —  Switch Mode";
+        g2d.setColor(new Color(255, 224, 120));
+        g2d.drawString(go, (w - g2d.getFontMetrics().stringWidth(go)) / 2, footY);
+
+        g2d.setFont(new Font("Arial", Font.PLAIN, 14));
+        g2d.setColor(new Color(150, 145, 170));
+        String info = "Solo: One hero with arrow keys • Multiplayer: Two heroes (Arrows + WASD)";
+        g2d.drawString(info, (w - g2d.getFontMetrics().stringWidth(info)) / 2, footY + 35);
+    }
+
+    private void renderModeCard(Graphics2D g2d, String title, String description, int x, int y, int cw, int ch, boolean selected) {
+        Color accent = selected ? new Color(255, 180, 90) : new Color(150, 145, 170);
+
+        // Glow for selected
+        if (selected) {
+            for (int r = 14; r > 0; r -= 2) {
+                g2d.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 10));
+                g2d.fillRoundRect(x - r, y - r, cw + 2 * r, ch + 2 * r, 26 + r, 26 + r);
+            }
+        }
+
+        // Card body
+        g2d.setColor(selected ? new Color(44, 36, 74) : new Color(28, 22, 46));
+        g2d.fillRoundRect(x, y, cw, ch, 22, 22);
+        g2d.setStroke(new BasicStroke(selected ? 3.5f : 1.5f));
+        g2d.setColor(selected ? accent : new Color(80, 72, 110));
+        g2d.drawRoundRect(x, y, cw, ch, 22, 22);
+
+        // Title
+        g2d.setFont(new Font("Arial", Font.BOLD, 32));
+        g2d.setColor(selected ? Color.WHITE : new Color(170, 162, 195));
+        FontMetrics fm = g2d.getFontMetrics();
+        g2d.drawString(title, x + (cw - fm.stringWidth(title)) / 2, y + 60);
+
+        // Description
+        g2d.setFont(new Font("Arial", Font.ITALIC, 16));
+        g2d.setColor(accent);
+        g2d.drawString(description, x + (cw - g2d.getFontMetrics().stringWidth(description)) / 2, y + 95);
+
+        // Info text
+        g2d.setFont(new Font("Arial", Font.PLAIN, 13));
+        g2d.setColor(selected ? new Color(220, 210, 240) : new Color(140, 135, 165));
+        String info = title.equals("SOLO") ? "Play alone" : "Play with friend";
+        g2d.drawString(info, x + (cw - g2d.getFontMetrics().stringWidth(info)) / 2, y + 140);
+
+        // Selected tag
+        if (selected) {
+            g2d.setFont(new Font("Arial", Font.BOLD, 13));
+            String tag = "SELECTED";
+            int tw = g2d.getFontMetrics().stringWidth(tag);
+            int pillW = tw + 38, pillX = x + (cw - pillW) / 2, pillY = y + ch - 30;
+            g2d.setColor(accent);
+            g2d.fillRoundRect(pillX, pillY, pillW, 22, 11, 11);
+            g2d.setColor(new Color(20, 16, 34));
+            int ax = pillX + 12, ay = pillY + 11;
+            g2d.fillPolygon(new int[]{ax, ax + 7, ax}, new int[]{ay - 5, ay, ay + 5}, 3);
+            g2d.drawString(tag, pillX + 22, y + ch - 14);
+        }
     }
 
     private void renderHeroCard(Graphics2D g2d, HeroType hero, int x, int y, int cw, int ch, boolean selected) {
@@ -1177,18 +1333,34 @@ public class DrawingPanel extends JPanel {
     }
 
     private void renderAttackAnimation(Graphics g) {
-        team.model.MainPlayer player = UiPort.getInstance().getMainPlayer();
-        if (player == null || !player.isAttacking()) return;
-
-        String anim = player.getCurrentAnimation();
-        if ("Slash Attack".equals(anim)) {
-            renderSlashAnimation(g, player);
-        } else if ("Fireball".equals(anim)) {
-            renderFireballAnimation(g, player);
-        } else if ("AquaBeam".equals(anim)) {
-            renderAquaBeamAnimation(g, player);
-        } else {
-            renderBasicAttackAnimation(g, player);
+        // Render Player 1 attack
+        team.model.MainPlayer player1 = UiPort.getInstance().getMainPlayer();
+        if (player1 != null && player1.isAttacking()) {
+            String anim = player1.getCurrentAnimation();
+            if ("Slash Attack".equals(anim)) {
+                renderSlashAnimation(g, player1);
+            } else if ("Fireball".equals(anim)) {
+                renderFireballAnimation(g, player1);
+            } else if ("AquaBeam".equals(anim)) {
+                renderAquaBeamAnimation(g, player1);
+            } else {
+                renderBasicAttackAnimation(g, player1);
+            }
+        }
+        
+        // Render Player 2 attack (if in multiplayer mode)
+        team.model.MainPlayer player2 = UiPort.getInstance().getMainPlayer2();
+        if (player2 != null && player2.isAttacking()) {
+            String anim = player2.getCurrentAnimation();
+            if ("Slash Attack".equals(anim)) {
+                renderSlashAnimation(g, player2);
+            } else if ("Fireball".equals(anim)) {
+                renderFireballAnimation(g, player2);
+            } else if ("AquaBeam".equals(anim)) {
+                renderAquaBeamAnimation(g, player2);
+            } else {
+                renderBasicAttackAnimation(g, player2);
+            }
         }
     }
 
@@ -1405,25 +1577,40 @@ public class DrawingPanel extends JPanel {
     }
 
     private void renderMainPlayer(Graphics g) {
-        team.model.MainPlayer player = UiPort.getInstance().getMainPlayer();
-        if (player == null) return;
+        team.model.MainPlayer player1 = UiPort.getInstance().getMainPlayer();
+        if (player1 == null) return;
 
         Graphics2D g2d = (Graphics2D) g;
         Image playerImage = heroImage(selectedHero());
         if (!isImageLoaded(playerImage)) playerImage = PLAYER_IMAGE;
         if (!isImageLoaded(playerImage)) return;
 
-        int px = (int) player.getX();
-        int py = (int) player.getY();
+        // Render Player 1
+        int px1 = (int) player1.getX();
+        int py1 = (int) player1.getY();
 
-        if (player.isFacingRight()) {
-            // הופך אופקית — התמונה המקורית פונה שמאלה
-            drawImageFit(g2d, playerImage, px, py - 15, 50, 65, true);
+        if (player1.isFacingRight()) {
+            drawImageFit(g2d, playerImage, px1, py1 - 15, 50, 65, true);
         } else {
-            drawImageFit(g2d, playerImage, px, py - 15, 50, 65, false);
+            drawImageFit(g2d, playerImage, px1, py1 - 15, 50, 65, false);
         }
 
-        renderMainPlayerHealthBar(g2d, player, px, py);
+        renderMainPlayerHealthBar(g2d, player1, px1, py1);
+
+        // Render Player 2 (if in multiplayer mode)
+        team.model.MainPlayer player2 = UiPort.getInstance().getMainPlayer2();
+        if (player2 != null) {
+            int px2 = (int) player2.getX();
+            int py2 = (int) player2.getY();
+
+            if (player2.isFacingRight()) {
+                drawImageFit(g2d, playerImage, px2, py2 - 15, 50, 65, true);
+            } else {
+                drawImageFit(g2d, playerImage, px2, py2 - 15, 50, 65, false);
+            }
+
+            renderMainPlayerHealthBar(g2d, player2, px2, py2);
+        }
     }
 
     private boolean isImageLoaded(Image image) {
@@ -1479,50 +1666,68 @@ public class DrawingPanel extends JPanel {
     }
 
     private void renderPlayerStats(Graphics g) {
-        team.model.MainPlayer player = UiPort.getInstance().getMainPlayer();
-        if (player == null || player.getStats() == null) return;
+        team.model.MainPlayer player1 = UiPort.getInstance().getMainPlayer();
+        if (player1 == null || player1.getStats() == null) return;
 
-        team.model.PlayerStats stats = player.getStats();
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int pending = App.content().backend().getPendingUpgrades();
         int panelX = 10, panelY = 10, panelW = 190, panelH = (pending > 0) ? 198 : 168;
 
+        // Render Player 1 stats (left side)
+        renderPlayerStatsPanel(g2d, player1, panelX, panelY, panelW, panelH, "P1", pending);
+
+        // Render Player 2 stats (right side) if in multiplayer mode
+        team.model.MainPlayer player2 = UiPort.getInstance().getMainPlayer2();
+        if (player2 != null && player2.getStats() != null) {
+            int panelX2 = getWidth() - panelW - 10;
+            renderPlayerStatsPanel(g2d, player2, panelX2, panelY, panelW, panelH, "P2", 0);
+        }
+    }
+
+    private void renderPlayerStatsPanel(Graphics2D g2d, team.model.MainPlayer player, int panelX, int panelY, int panelW, int panelH, String label, int pending) {
+        team.model.PlayerStats stats = player.getStats();
+
         g2d.setColor(new Color(0, 0, 0, 150));
         g2d.fillRoundRect(panelX, panelY, panelW, panelH, 12, 12);
+
+        // Label (P1 or P2)
+        g2d.setFont(new Font("Arial", Font.BOLD, 12));
+        g2d.setColor(new Color(200, 190, 220));
+        g2d.drawString(label, panelX + 10, panelY + 12);
 
         g2d.setFont(new Font("Arial", Font.BOLD, 13));
 
         g2d.setColor(new Color(220, 60, 60));
-        g2d.drawString("HP:  " + (int) stats.getHealth() + " / " + (int) stats.getMaxHealth(), panelX + 10, panelY + 24);
+        g2d.drawString("HP:  " + (int) stats.getHealth() + " / " + (int) stats.getMaxHealth(), panelX + 10, panelY + 33);
 
         g2d.setColor(new Color(60, 140, 220));
-        g2d.drawString("MP:  " + (int) stats.getEnergy() + " / " + (int) stats.getMaxEnergy(), panelX + 10, panelY + 45);
+        g2d.drawString("MP:  " + (int) stats.getEnergy() + " / " + (int) stats.getMaxEnergy(), panelX + 10, panelY + 54);
 
         g2d.setColor(new Color(230, 140, 30));
-        g2d.drawString("STR: " + (int) stats.getStrength(), panelX + 10, panelY + 66);
+        g2d.drawString("STR: " + (int) stats.getStrength(), panelX + 10, panelY + 75);
 
         g2d.setColor(new Color(60, 200, 80));
-        g2d.drawString("AGI: " + (int) stats.getAgility(), panelX + 10, panelY + 87);
+        g2d.drawString("AGI: " + (int) stats.getAgility(), panelX + 10, panelY + 96);
 
         if (stats.getDefense() > 0) {
             g2d.setColor(new Color(60, 210, 220));
-            g2d.drawString("DEF: " + (int) stats.getDefense(), panelX + 10, panelY + 108);
+            g2d.drawString("DEF: " + (int) stats.getDefense(), panelX + 10, panelY + 117);
         }
 
-        // קו מפריד
+        // Separator line
         g2d.setColor(new Color(255, 255, 255, 40));
-        g2d.drawLine(panelX + 10, panelY + 98, panelX + panelW - 10, panelY + 98);
+        g2d.drawLine(panelX + 10, panelY + 108, panelX + panelW - 10, panelY + 108);
 
-        // רמה + מטבעות
+        // Level + Coins
         team.model.PlayerProgress prog = player.getProgress();
 
         g2d.setFont(new Font("Arial", Font.BOLD, 15));
         g2d.setColor(new Color(180, 150, 255));
-        g2d.drawString("LV " + prog.getLevel(), panelX + 10, panelY + 122);
+        g2d.drawString("LV " + prog.getLevel(), panelX + 10, panelY + 131);
 
-        // אייקון מטבע + ספירה (צד ימין)
+        // Coin icon + count (right side)
         int coinX = panelX + panelW - 78, coinY = panelY + 110;
         g2d.setColor(new Color(170, 130, 20));
         g2d.fillOval(coinX, coinY, 16, 16);
@@ -1533,10 +1738,10 @@ public class DrawingPanel extends JPanel {
         g2d.drawString("$", coinX + 5, coinY + 12);
         g2d.setColor(new Color(255, 220, 90));
         g2d.setFont(new Font("Arial", Font.BOLD, 15));
-        g2d.drawString(String.valueOf(prog.getCoins()), coinX + 22, panelY + 123);
+        g2d.drawString(String.valueOf(prog.getCoins()), coinX + 22, panelY + 131);
 
-        // מד XP
-        int barX = panelX + 10, barY = panelY + 134, barW = panelW - 20, barH = 14;
+        // XP bar
+        int barX = panelX + 10, barY = panelY + 143, barW = panelW - 20, barH = 14;
         g2d.setColor(new Color(38, 38, 50));
         g2d.fillRoundRect(barX, barY, barW, barH, 7, 7);
         int fill = (int) (barW * Math.min(1.0, prog.getXp() / (double) prog.getXpToNext()));
@@ -1551,11 +1756,83 @@ public class DrawingPanel extends JPanel {
         g2d.setColor(Color.WHITE);
         g2d.drawString(xpText, barX + (barW - fm.stringWidth(xpText)) / 2, barY + 11);
 
-        // נקודות שדרוג זמינות — רמז לפתיחת הפאנל ב-C
+        // Upgrade points available — hint for opening panel in C
         if (pending > 0) {
             g2d.setColor(new Color(150, 210, 255));
             g2d.setFont(new Font("Arial", Font.BOLD, 13));
-            g2d.drawString("Upgrade pts: " + pending + "  (press C)", panelX + 10, panelY + 192);
+            g2d.drawString("Upgrade pts: " + pending + "  (press C)", panelX + 10, panelY + 201);
+        }
+    }
+
+    // Handle mouse clicks on hero cards
+    private void handleHeroCardClick(int mouseX, int mouseY) {
+        int w = getWidth(), h = getHeight();
+        HeroType[] heroes = HeroType.values();
+        
+        // Calculate card positions (same as renderStartScreen)
+        int cardW = 230, cardH = 330, gap = 50;
+        int totalW = heroes.length * cardW + (heroes.length - 1) * gap;
+        int startX = (w - totalW) / 2;
+        int cardY = 185;  // From renderStartScreen calculation
+        
+        for (int i = 0; i < heroes.length; i++) {
+            int cx = startX + i * (cardW + gap);
+            int cy = cardY;
+            
+            if (mouseX >= cx && mouseX <= cx + cardW && mouseY >= cy && mouseY <= cy + cardH) {
+                HeroType clickedHero = heroes[i];
+                HeroType currentHero = App.content().canvas().getSelectedHero();
+                
+                if (clickedHero != currentHero) {
+                    // Cycle until we reach the clicked hero
+                    int currentIndex = currentHero.ordinal();
+                    int targetIndex = clickedHero.ordinal();
+                    int cyclesToTarget = (targetIndex - currentIndex + heroes.length) % heroes.length;
+                    for (int j = 0; j < cyclesToTarget; j++) {
+                        mainRouter.route("/system/key/down", Params.of("selectHero"));
+                    }
+                } else {
+                    // Clicked on same hero — transition to game mode select
+                    mainRouter.route("/system/key/down", Params.of("start"));
+                }
+                return;
+            }
+        }
+    }
+
+    // Handle mouse clicks on mode cards
+    private void handleModeCardClick(int mouseX, int mouseY) {
+        int w = getWidth(), h = getHeight();
+        
+        // Calculate card positions (same as renderGameModeSelect)
+        int cardW = 250, cardH = 280, gap = 60;
+        int totalW = 2 * cardW + gap;
+        int startX = (w - totalW) / 2;
+        int cardY = 185;  // From renderGameModeSelect calculation
+        
+        GameMode selectedMode = App.content().canvas().getSelectedGameMode();
+        
+        // Check SOLO card
+        if (mouseX >= startX && mouseX <= startX + cardW && mouseY >= cardY && mouseY <= cardY + cardH) {
+            if (selectedMode != GameMode.SOLO) {
+                mainRouter.route("/system/key/down", Params.of("selectGameMode"));
+            } else {
+                // Clicked on SOLO and it's already selected — start game
+                mainRouter.route("/system/key/down", Params.of("start"));
+            }
+            return;
+        }
+        
+        // Check MULTIPLAYER card
+        int mpX = startX + cardW + gap;
+        if (mouseX >= mpX && mouseX <= mpX + cardW && mouseY >= cardY && mouseY <= cardY + cardH) {
+            if (selectedMode != GameMode.MULTIPLAYER) {
+                mainRouter.route("/system/key/down", Params.of("selectGameMode"));
+            } else {
+                // Clicked on MULTIPLAYER and it's already selected — start game
+                mainRouter.route("/system/key/down", Params.of("start"));
+            }
+            return;
         }
     }
 }

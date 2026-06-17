@@ -9,12 +9,14 @@ public class UiPortImpl extends UiPort {
     private Map<String, ImageElement> images;
     private team.model.Map map;
     private team.model.MainPlayer mainPlayer;
+    private team.model.MainPlayer mainPlayer2;  // P2 in multiplayer mode
     private JPanel panel;
 
     public UiPortImpl(Map<String, ImageElement> images, team.model.Map map, JPanel panel) {
         this.images = images;
         this.map    = map;
         this.panel  = panel;
+        this.mainPlayer2 = null;  // Initially null (solo mode)
     }
 
     @Override
@@ -59,6 +61,26 @@ public class UiPortImpl extends UiPort {
         if (mainPlayer != null) {
             mainPlayer.setX(x);
             mainPlayer.setY(y);
+            panel.repaint();
+        }
+    }
+
+    @Override
+    public void setMainPlayer2(team.model.MainPlayer player) {
+        this.mainPlayer2 = player;
+        panel.repaint();
+    }
+
+    @Override
+    public team.model.MainPlayer getMainPlayer2() {
+        return this.mainPlayer2;
+    }
+
+    @Override
+    public void updatePlayer2Position(double x, double y) {
+        if (mainPlayer2 != null) {
+            mainPlayer2.setX(x);
+            mainPlayer2.setY(y);
             panel.repaint();
         }
     }

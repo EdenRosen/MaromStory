@@ -6,7 +6,8 @@ import java.util.List;
 public class Canvas {
 
     private Map map;
-    private MainPlayer mainPlayer;
+    private MainPlayer mainPlayer1;  // P1 (arrow keys in multiplayer)
+    private MainPlayer mainPlayer2;  // P2 (WASD in multiplayer, null in solo)
     private Sword sword;
     private List<Enemy> enemies;
 
@@ -14,32 +15,54 @@ public class Canvas {
     private HeroType selectedHero = HeroType.WARRIOR;
     // המפה הנוכחית — נשמרת בין אתחולים
     private MapType currentMap = MapType.MEADOW;
+    // מצב המשחק — Solo או Multiplayer
+    private GameMode selectedGameMode = GameMode.SOLO;
 
     public HeroType getSelectedHero()          { return selectedHero; }
     public void setSelectedHero(HeroType hero)  { this.selectedHero = hero; }
     public MapType getCurrentMap()             { return currentMap; }
     public void setCurrentMap(MapType map)      { this.currentMap = map; }
+    public GameMode getSelectedGameMode()      { return selectedGameMode; }
+    public void setSelectedGameMode(GameMode mode) { this.selectedGameMode = mode; }
 
     // אתחול מלא — יוצר שחקן חדש ובונה את העולם (עלייה / reset)
     public void initCanvas() {
-        mainPlayer = new MainPlayer(0, 150, 150);
+        // תמיד צור את Player 1
+        mainPlayer1 = new MainPlayer(0, 150, 150);
+        setupPlayerAttacks(mainPlayer1);
+        
+        // ב-Multiplayer mode, צור גם את Player 2 בעמדת התחלה שונה
+        if (selectedGameMode == GameMode.MULTIPLAYER) {
+            mainPlayer2 = new MainPlayer(1, 900, 150);
+            setupPlayerAttacks(mainPlayer2);
+        } else {
+            mainPlayer2 = null;  // Solo mode
+        }
+        
+        buildWorld();
+    }
+
+    // עזר לאתחול הקסמים של שחקן
+    private void setupPlayerAttacks(MainPlayer player) {
         // סקיל שני (index 1) נקבע לפי הגיבור הנבחר
         switch (selectedHero) {
             case WARRIOR:
-                mainPlayer.addAttack(new SlashAttack());
+                player.addAttack(new SlashAttack());
                 break;
             case MAGE:
-                mainPlayer.addAttack(new FireballAttack());
-                mainPlayer.addAttack(new AquaBeamAttack());
+                player.addAttack(new FireballAttack());
+                player.addAttack(new AquaBeamAttack());
                 break;
         }
-        buildWorld();
     }
 
     // מעבר (טלפורט) למפה אחרת — שומר את השחקן וההתקדמות שלו, בונה עולם חדש
     public void loadMap(MapType type) {
         currentMap = type;
-        mainPlayer.setPosition(150, 150);   // חזרה לנקודת ההתחלה במפה החדשה
+        mainPlayer1.setPosition(150, 150);   // חזרה לנקודת ההתחלה במפה החדשה
+        if (mainPlayer2 != null) {
+            mainPlayer2.setPosition(900, 150);  // P2 starts at different position
+        }
         buildWorld();
     }
 
@@ -63,9 +86,9 @@ public class Canvas {
 
         sword = new Sword("Iron Sword", 10, 300, 450);
 
-        spawnEnemy(1, 700, 430, EnemyType.SWIFT_HENRY);
-        spawnEnemy(2, 900, 430, EnemyType.EVIL_HENRY);
-        spawnEnemy(3, 600, 430, EnemyType.GIANT_HENRY);
+        spawnEnemy(1, 500, 430, EnemyType.SWIFT_HENRY);
+        spawnEnemy(2, 700, 430, EnemyType.EVIL_HENRY);
+        spawnEnemy(3, 400, 430, EnemyType.GIANT_HENRY);
     }
 
     private void buildInferno() {
@@ -109,7 +132,8 @@ public class Canvas {
     }
 
     public Map getMap()               { return map; }
-    public MainPlayer getMainPlayer() { return mainPlayer; }
+    public MainPlayer getMainPlayer() { return mainPlayer1; }  // P1 (backward compatible)
+    public MainPlayer getMainPlayer2() { return mainPlayer2; } // P2 (null in solo mode)
     public Sword getSword()           { return sword; }
     public void setSword(Sword s)     { sword = s; }
     public List<Enemy> getEnemies()   { return enemies; }
