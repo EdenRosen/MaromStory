@@ -61,7 +61,7 @@ public class Backend {
             Canvas canvas = App.content().canvas();
             canvas.initCanvas();
             uiPort().setMap(canvas.getMap());
-            uiPort().setMainPlayer(canvas.getMainPlayer());
+            syncPlayers(canvas);
             return;
         }
         if (state == GameState.START_SCREEN) {
@@ -75,10 +75,7 @@ public class Backend {
             Canvas canvas = App.content().canvas();
             uiPort().addImage(99, "resources/canvaBackround.jpg", 0, 0, 1200, 800, 0, true);
             uiPort().setMap(canvas.getMap());
-            uiPort().setMainPlayer(canvas.getMainPlayer());
-            if (canvas.getMainPlayer2() != null) {
-                uiPort().setMainPlayer2(canvas.getMainPlayer2());
-            }
+            syncPlayers(canvas);
             state = GameState.PLAYING;
             uiPort().renderInitials();
             uiPort().log("Scenario started: MaromQuest");
@@ -104,7 +101,7 @@ public class Backend {
         canvas.setSelectedHero(next);
         canvas.initCanvas();
         uiPort().setMap(canvas.getMap());
-        uiPort().setMainPlayer(canvas.getMainPlayer());
+        syncPlayers(canvas);
         uiPort().log("Hero selected: " + next);
     }
 
@@ -118,10 +115,7 @@ public class Backend {
         canvas.setSelectedGameMode(next);
         canvas.initCanvas();
         uiPort().setMap(canvas.getMap());
-        uiPort().setMainPlayer(canvas.getMainPlayer());
-        if (canvas.getMainPlayer2() != null) {
-            uiPort().setMainPlayer2(canvas.getMainPlayer2());
-        }
+        syncPlayers(canvas);
         uiPort().log("Game mode selected: " + next);
     }
 
@@ -129,9 +123,14 @@ public class Backend {
         Canvas canvas = App.content().canvas();
         canvas.initCanvas();
         uiPort().setMap(canvas.getMap());
-        uiPort().setMainPlayer(canvas.getMainPlayer());
+        syncPlayers(canvas);
         state = GameState.PLAYING;
         uiPort().log("Scenario reset");
+    }
+
+    private void syncPlayers(Canvas canvas) {
+        uiPort().setMainPlayer(canvas.getMainPlayer());
+        uiPort().setMainPlayer2(canvas.getMainPlayer2());
     }
 
     // --- פקודות תנועה (מגיעות מ-Router בלבד, אין כאן שום ידיעה על מקשים) ---
@@ -212,10 +211,23 @@ public class Backend {
         uiPort().updatePlayer2Position(p2.getX(), p2.getY());
     }
 
+    public void attackOrThrow_p2() {
+        attackEnemy_p2();
+        throwSword_p2();
+    }
+
     public void switchAttack_p2(int index) {
         MainPlayer p2 = App.content().canvas().getMainPlayer2();
         if (p2 != null) {
             p2.setActiveAttack(index);
+            uiPort().log("[P2] Active attack: " + p2.getActiveAttackName());
+        }
+    }
+
+    public void cycleAttack_p2() {
+        MainPlayer p2 = App.content().canvas().getMainPlayer2();
+        if (p2 != null) {
+            p2.selectNextAttack();
             uiPort().log("[P2] Active attack: " + p2.getActiveAttackName());
         }
     }
@@ -335,9 +347,20 @@ public class Backend {
         uiPort().updatePlayerPosition(player.getX(), player.getY());
     }
 
+    public void attackOrThrow() {
+        attackEnemy();
+        throwSword();
+    }
+
     public void switchAttack(int index) {
         MainPlayer player = App.content().canvas().getMainPlayer();
         player.setActiveAttack(index);
+        uiPort().log("Active attack: " + player.getActiveAttackName());
+    }
+
+    public void cycleAttack() {
+        MainPlayer player = App.content().canvas().getMainPlayer();
+        player.selectNextAttack();
         uiPort().log("Active attack: " + player.getActiveAttackName());
     }
 

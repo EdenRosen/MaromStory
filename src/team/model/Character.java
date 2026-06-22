@@ -111,6 +111,12 @@ public abstract class Character extends IdentifiedObject {
         if (index >= 0 && index < attacks.size()) activeAttackIndex = index;
     }
 
+    public void selectNextAttack() {
+        if (!attacks.isEmpty()) {
+            activeAttackIndex = (activeAttackIndex + 1) % attacks.size();
+        }
+    }
+
     public boolean useActiveAttack(Character target) {
         return useAttack(activeAttackIndex, target);
     }

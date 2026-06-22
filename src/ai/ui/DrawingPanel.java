@@ -88,14 +88,14 @@ public class DrawingPanel extends JPanel {
             case KeyEvent.VK_D:     return "right_p2";
             
             // Player 1 actions
-            case KeyEvent.VK_SPACE: return "attack";       // P1 attack
+            case KeyEvent.VK_SPACE: return "attack";       // P1 attack / throw
             case KeyEvent.VK_N:     return "pickup";       // P1 pickup
-            case KeyEvent.VK_M:     return "throw";        // P1 throw
+            case KeyEvent.VK_M:     return "nextAttack";   // P1 change attack style
             
             // Player 2 actions
-            case KeyEvent.VK_R:     return "attack_p2";    // P2 attack
+            case KeyEvent.VK_R:     return "attack_p2";    // P2 attack / throw
             case KeyEvent.VK_Q:     return "pickup_p2";    // P2 pickup
-            case KeyEvent.VK_E:     return "throw_p2";     // P2 throw
+            case KeyEvent.VK_E:     return "nextAttack_p2";// P2 change attack style
             
             // Shared menu controls
             case KeyEvent.VK_C:     return "upgradePanel";
@@ -1965,6 +1965,7 @@ public class DrawingPanel extends JPanel {
                     for (int j = 0; j < cyclesToTarget; j++) {
                         mainRouter.route("/system/key/down", Params.of("selectHero"));
                     }
+                    mainRouter.route("/system/key/down", Params.of("start"));
                 } else {
                     // Clicked on same hero — transition to game mode select
                     mainRouter.route("/system/key/down", Params.of("start"));

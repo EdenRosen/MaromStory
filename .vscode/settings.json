@@ -1,0 +1,7 @@
+{
+  "files.encoding": "utf8",
+  "code-runner.runInTerminal": true,
+  "code-runner.executorMap": {
+    "java": "powershell -NoProfile -ExecutionPolicy Bypass -File \"$workspaceRoot\\run-game.ps1\""
+  }
+}
