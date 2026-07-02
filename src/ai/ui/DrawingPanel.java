@@ -772,26 +772,18 @@ public class DrawingPanel extends JPanel {
     }
 
     private void renderModeCard(Graphics2D g2d, String title, String description, int x, int y, int cw, int ch, boolean selected) {
-        Color accent = selected ? new Color(255, 180, 90) : new Color(150, 145, 170);
-
-        // Glow for selected
-        if (selected) {
-            for (int r = 14; r > 0; r -= 2) {
-                g2d.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 10));
-                g2d.fillRoundRect(x - r, y - r, cw + 2 * r, ch + 2 * r, 26 + r, 26 + r);
-            }
-        }
+        Color accent = new Color(150, 145, 170);
 
         // Card body
-        g2d.setColor(selected ? new Color(44, 36, 74) : new Color(28, 22, 46));
+        g2d.setColor(new Color(28, 22, 46));
         g2d.fillRoundRect(x, y, cw, ch, 22, 22);
-        g2d.setStroke(new BasicStroke(selected ? 3.5f : 1.5f));
-        g2d.setColor(selected ? accent : new Color(80, 72, 110));
+        g2d.setStroke(new BasicStroke(1.5f));
+        g2d.setColor(new Color(80, 72, 110));
         g2d.drawRoundRect(x, y, cw, ch, 22, 22);
 
         // Title
         g2d.setFont(new Font("Arial", Font.BOLD, 32));
-        g2d.setColor(selected ? Color.WHITE : new Color(170, 162, 195));
+        g2d.setColor(new Color(200, 194, 220));
         FontMetrics fm = g2d.getFontMetrics();
         g2d.drawString(title, x + (cw - fm.stringWidth(title)) / 2, y + 60);
 
@@ -802,48 +794,27 @@ public class DrawingPanel extends JPanel {
 
         // Info text
         g2d.setFont(new Font("Arial", Font.PLAIN, 13));
-        g2d.setColor(selected ? new Color(220, 210, 240) : new Color(140, 135, 165));
+        g2d.setColor(new Color(160, 154, 180));
         String info = title.equals("SOLO") ? "Play alone"
                 : title.equals("PVP") ? "Fight each other"
                 : "Play with a friend";
         g2d.drawString(info, x + (cw - g2d.getFontMetrics().stringWidth(info)) / 2, y + 140);
 
-        // Selected tag
-        if (selected) {
-            g2d.setFont(new Font("Arial", Font.BOLD, 13));
-            String tag = "SELECTED";
-            int tw = g2d.getFontMetrics().stringWidth(tag);
-            int pillW = tw + 38, pillX = x + (cw - pillW) / 2, pillY = y + ch - 30;
-            g2d.setColor(accent);
-            g2d.fillRoundRect(pillX, pillY, pillW, 22, 11, 11);
-            g2d.setColor(new Color(20, 16, 34));
-            int ax = pillX + 12, ay = pillY + 11;
-            g2d.fillPolygon(new int[]{ax, ax + 7, ax}, new int[]{ay - 5, ay, ay + 5}, 3);
-            g2d.drawString(tag, pillX + 22, y + ch - 14);
-        }
     }
 
     private void renderHeroCard(Graphics2D g2d, HeroType hero, int x, int y, int cw, int ch, boolean selected) {
         Color accent = heroAccent(hero);
 
-        // הילה לכרטיס הנבחר
-        if (selected) {
-            for (int r = 14; r > 0; r -= 2) {
-                g2d.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 10));
-                g2d.fillRoundRect(x - r, y - r, cw + 2 * r, ch + 2 * r, 26 + r, 26 + r);
-            }
-        }
-
         // גוף הכרטיס
-        g2d.setColor(selected ? new Color(44, 36, 74) : new Color(28, 22, 46));
+        g2d.setColor(new Color(28, 22, 46));
         g2d.fillRoundRect(x, y, cw, ch, 22, 22);
-        g2d.setStroke(new BasicStroke(selected ? 3.5f : 1.5f));
-        g2d.setColor(selected ? accent : new Color(80, 72, 110));
+        g2d.setStroke(new BasicStroke(1.5f));
+        g2d.setColor(new Color(80, 72, 110));
         g2d.drawRoundRect(x, y, cw, ch, 22, 22);
 
         // שם
         g2d.setFont(new Font("Arial", Font.BOLD, 28));
-        g2d.setColor(selected ? Color.WHITE : new Color(170, 162, 195));
+        g2d.setColor(new Color(200, 194, 220));
         FontMetrics fm = g2d.getFontMetrics();
         g2d.drawString(heroName(hero), x + (cw - fm.stringWidth(heroName(hero))) / 2, y + 38);
 
@@ -867,23 +838,8 @@ public class DrawingPanel extends JPanel {
         g2d.setFont(new Font("Arial", Font.PLAIN, 15));
         String[] skills = heroSkills(hero);
         for (int i = 0; i < skills.length; i++) {
-            g2d.setColor(selected ? new Color(225, 222, 235) : new Color(150, 145, 170));
+            g2d.setColor(new Color(175, 170, 195));
             g2d.drawString(skills[i], x + 24, y + 240 + i * 24);
-        }
-
-        // תג "SELECTED"
-        if (selected) {
-            g2d.setFont(new Font("Arial", Font.BOLD, 13));
-            String tag = "SELECTED";
-            int tw = g2d.getFontMetrics().stringWidth(tag);
-            int pillW = tw + 38, pillX = x + (cw - pillW) / 2, pillY = y + ch - 30;
-            g2d.setColor(accent);
-            g2d.fillRoundRect(pillX, pillY, pillW, 22, 11, 11);
-            // משולש קטן במקום תו יוניקוד
-            g2d.setColor(new Color(20, 16, 34));
-            int ax = pillX + 12, ay = pillY + 11;
-            g2d.fillPolygon(new int[]{ax, ax + 7, ax}, new int[]{ay - 5, ay, ay + 5}, 3);
-            g2d.drawString(tag, pillX + 22, y + ch - 14);
         }
     }
 
