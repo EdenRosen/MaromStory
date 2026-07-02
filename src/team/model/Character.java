@@ -48,8 +48,7 @@ public abstract class Character extends IdentifiedObject {
 
     public void jump() {
         if (onGround) {
-            // זריזות מגבירה את כוח הקפיצה (ערך שלילי יותר = קפיצה גבוהה יותר)
-            velocityY = JUMP_FORCE - (stats.getAgility() - 5) * 0.35;
+            velocityY = JUMP_FORCE;
             onGround  = false;
         }
     }

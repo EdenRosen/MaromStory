@@ -1,10 +1,12 @@
 package team.model;
 
 /**
- * Game mode selection: Solo or Multiplayer
- * Both players use the same selected HeroType and stats.
+ * SOLO: one player against enemies.
+ * MULTIPLAYER: two-player co-op against enemies.
+ * PVP: two players with independently selected heroes fight each other.
  */
 public enum GameMode {
     SOLO,
-    MULTIPLAYER
+    MULTIPLAYER,
+    PVP
 }

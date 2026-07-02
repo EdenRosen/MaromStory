@@ -14,12 +14,23 @@ public class MainPlayer extends Character {
     private String currentAnimation = "";
 
     private final PlayerProgress progress = new PlayerProgress();
+    private final HeroType heroType;
 
     public MainPlayer(int id, double x, double y) {
-        super(id, x, y, new PlayerStats(100, 50, 10, 5));
+        this(id, x, y, HeroType.WARRIOR);
+    }
+
+    public MainPlayer(int id, double x, double y, HeroType heroType) {
+        super(id, x, y, new PlayerStats(
+                heroType == HeroType.WARRIOR ? 120 : 100,
+                50,
+                10,
+                5));
+        this.heroType = heroType;
     }
 
     public PlayerProgress getProgress() { return progress; }
+    public HeroType getHeroType() { return heroType; }
 
     // מהירות תנועה מושפעת מזריזות — כל נקודת AGI מעל הבסיס מוסיפה מעט מהירות
     public double getMoveSpeed() {

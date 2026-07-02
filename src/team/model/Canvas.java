@@ -14,6 +14,7 @@ public class Canvas {
 
     // הגיבור הנבחר — נשמר בין אתחולים (reset) ונקבע במסך הפתיחה
     private HeroType selectedHero = HeroType.WARRIOR;
+    private HeroType selectedHero2 = HeroType.WARRIOR;
     // המפה הנוכחית — נשמרת בין אתחולים
     private MapType currentMap = MapType.MEADOW;
     // מצב המשחק — Solo או Multiplayer
@@ -21,6 +22,8 @@ public class Canvas {
 
     public HeroType getSelectedHero()          { return selectedHero; }
     public void setSelectedHero(HeroType hero)  { this.selectedHero = hero; }
+    public HeroType getSelectedHero2()          { return selectedHero2; }
+    public void setSelectedHero2(HeroType hero) { this.selectedHero2 = hero; }
     public MapType getCurrentMap()             { return currentMap; }
     public void setCurrentMap(MapType map)      { this.currentMap = map; }
     public GameMode getSelectedGameMode()      { return selectedGameMode; }
@@ -29,24 +32,31 @@ public class Canvas {
     // אתחול מלא — יוצר שחקן חדש ובונה את העולם (עלייה / reset)
     public void initCanvas() {
         // תמיד צור את Player 1
-        mainPlayer1 = new MainPlayer(0, 150, 150);
-        setupPlayerAttacks(mainPlayer1);
+        mainPlayer1 = new MainPlayer(0, 150, 150, selectedHero);
+        setupPlayerAttacks(mainPlayer1, selectedHero);
         
         // ב-Multiplayer mode, צור גם את Player 2 בעמדת התחלה שונה
-        if (selectedGameMode == GameMode.MULTIPLAYER) {
-            mainPlayer2 = new MainPlayer(1, 900, 150);
-            setupPlayerAttacks(mainPlayer2);
+        if (selectedGameMode == GameMode.MULTIPLAYER || selectedGameMode == GameMode.PVP) {
+            mainPlayer2 = new MainPlayer(1, 900, 150, selectedHero2);
+            setupPlayerAttacks(mainPlayer2, selectedHero2);
+            mainPlayer2.setVelocityX(-1);
+            mainPlayer2.setVelocityX(0);
         } else {
             mainPlayer2 = null;  // Solo mode
         }
         
+        if (selectedGameMode == GameMode.PVP) {
+            preparePvpPlayer(mainPlayer1);
+            preparePvpPlayer(mainPlayer2);
+        }
+
         buildWorld();
     }
 
     // עזר לאתחול הקסמים של שחקן
-    private void setupPlayerAttacks(MainPlayer player) {
+    private void setupPlayerAttacks(MainPlayer player, HeroType heroType) {
         // סקיל שני (index 1) נקבע לפי הגיבור הנבחר
-        switch (selectedHero) {
+        switch (heroType) {
             case WARRIOR:
                 player.addAttack(new SlashAttack());
                 break;
@@ -58,6 +68,14 @@ public class Canvas {
     }
 
     // מעבר (טלפורט) למפה אחרת — שומר את השחקן וההתקדמות שלו, בונה עולם חדש
+    private void preparePvpPlayer(MainPlayer player) {
+        player.getProgress().setStartingLevel(5);
+        player.getStats().increaseMaxEnergy(60);
+        if (player.getHeroType() == HeroType.WARRIOR) {
+            player.pickupSword(new Sword("Iron Sword", 10, player.getX(), player.getY()));
+        }
+    }
+
     public void loadMap(MapType type) {
         currentMap = type;
         mainPlayer1.setPosition(150, 150);   // חזרה לנקודת ההתחלה במפה החדשה
@@ -78,6 +96,11 @@ public class Canvas {
             case FROST:       buildFrost();      break;
             case VOID:        buildVoid();       break;
             case BOSS_ARENA:  buildBossArena();  break;
+        }
+        if (selectedGameMode == GameMode.PVP) {
+            enemies.clear();
+            extraSwords.clear();
+            sword = null;
         }
     }
 

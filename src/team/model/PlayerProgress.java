@@ -16,6 +16,11 @@ public class PlayerProgress {
     public int getXp()       { return xp; }
     public int getLevel()    { return level; }
 
+    public void setStartingLevel(int startingLevel) {
+        level = Math.max(1, startingLevel);
+        xp = 0;
+    }
+
     // כמות ה-XP הדרושה למעבר לרמה הבאה — גדלה עם הרמה
     public int getXpToNext() { return level * 100; }
 

@@ -7,7 +7,7 @@ package team.model;
 public class AquaBeamAttack implements Attacks {
 
     private static final double BASE_DAMAGE = 65;
-    private static final double MP_COST     = 15.0;
+    private static final double MP_COST     = 70.0;
 
     @Override
     public void executeAttack(Character attacker, Character target) {
