@@ -105,10 +105,15 @@ public class Canvas {
     }
 
     private void buildMeadow() {
-        map.addRectangle(new MapRect(0, 0,   500, 1200, 60));
-        map.addRectangle(new MapRect(0, 500, 300, 100,  40));
-        map.addRectangle(new MapRect(0, 200, 400, 80,   40));
-        map.addRectangle(new MapRect(0, 400, 400, 80,   40));
+        map.addRectangle(new MapRect(0, 0,   500, 2000, 60));
+        map.addRectangle(new MapRect(0, 200, 370, 80,   30));
+        map.addRectangle(new MapRect(0, 280, 270, 100,  30));
+        map.addRectangle(new MapRect(0, 380, 370, 80,   30));
+        map.addRectangle(new MapRect(0, 460, 270, 100,  30));
+        map.addRectangle(new MapRect(0, 560, 370, 80,   30));
+
+        
+        map.addRectangle(new MapRect(0, 700, 300, 150,   30));
 
         sword = new Sword("Iron Sword", 10, 300, 450);
 
