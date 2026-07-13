@@ -189,6 +189,19 @@ public class Backend {
         uiPort().log("Scenario reset");
     }
 
+    // Returns the UI to the initial game-mode selection screen
+    public void goHome() {
+        if (state == GameState.GAME_MODE_SELECT) return;
+        state = GameState.GAME_MODE_SELECT;
+        pvpWinner = 0;
+        // Ensure the UI refreshes immediately and shows the mode-selection screen
+        team.model.Canvas canvas = App.content().canvas();
+        uiPort().setMap(canvas.getMap());
+        uiPort().setMainPlayer(canvas.getMainPlayer());
+        uiPort().setMainPlayer2(canvas.getMainPlayer2());
+        uiPort().log("Returned to game mode selection");
+    }
+
     private void syncPlayers(Canvas canvas) {
         uiPort().setMainPlayer(canvas.getMainPlayer());
         uiPort().setMainPlayer2(canvas.getMainPlayer2());

@@ -95,6 +95,11 @@ public class SystemRouter implements SubRouter {
                 return null;
             }
 
+            case "/home": {
+                backend.goHome();
+                return null;
+            }
+
             default:
                 throw new RuntimeException("Unknown system route: " + subPath);
         }

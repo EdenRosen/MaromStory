@@ -730,7 +730,7 @@ public class DrawingPanel extends JPanel {
 
 
         graphics2D.setFont(new Font("Arial", Font.BOLD, 60));
-        String title = "MaromQuest";
+        String title = "Marom Story";
         FontMetrics fontMetrics = graphics2D.getFontMetrics();
         int tx = (w - fontMetrics.stringWidth(title)) / 2;
         int ty = 110;
@@ -794,7 +794,7 @@ public class DrawingPanel extends JPanel {
 
 
         graphics2D.setFont(new Font("Arial", Font.BOLD, 60));
-        String title = "MaromQuest";
+        String title = "Marom Story";
         FontMetrics fontMetrics = graphics2D.getFontMetrics();
         int tx = (w - fontMetrics.stringWidth(title)) / 2;
         int ty = 110;
