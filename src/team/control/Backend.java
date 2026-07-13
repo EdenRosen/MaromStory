@@ -127,13 +127,13 @@ public class Backend {
     // שמסך הפתיחה יציג את הגיבור הנבחר ואת הסקילים שלו.
     public void cycleHero() {
         Canvas canvas = App.content().canvas();
-        HeroType[] all = HeroType.values();
+        HeroType[] allHeroes = HeroType.values();
         if (state == GameState.HERO_PLAYER1_SELECT) {
-            HeroType next = all[(canvas.getSelectedHero().ordinal() + 1) % all.length];
+            HeroType next = allHeroes[(canvas.getSelectedHero().ordinal() + 1) % allHeroes.length];
             canvas.setSelectedHero(next);
             uiPort().log("Player 1 hero selected: " + next);
         } else if (state == GameState.HERO_PLAYER2_SELECT) {
-            HeroType next = all[(canvas.getSelectedHero2().ordinal() + 1) % all.length];
+            HeroType next = allHeroes[(canvas.getSelectedHero2().ordinal() + 1) % allHeroes.length];
             canvas.setSelectedHero2(next);
             uiPort().log("Player 2 hero selected: " + next);
         }
@@ -189,15 +189,15 @@ public class Backend {
     // --- פקודות תנועה (מגיעות מ-Router בלבד, אין כאן שום ידיעה על מקשים) ---
 
     public void startMoveLeft() {
-        MainPlayer p = App.content().canvas().getMainPlayer();
-        if (p.getStats().isDead()) return;
-        p.setVelocityX(-p.getMoveSpeed());
+        MainPlayer player1 = App.content().canvas().getMainPlayer();
+        if (player1.getStats().isDead()) return;
+        player1.setVelocityX(-player1.getMoveSpeed());
     }
 
     public void startMoveRight() {
-        MainPlayer p = App.content().canvas().getMainPlayer();
-        if (p.getStats().isDead()) return;
-        p.setVelocityX(p.getMoveSpeed());
+        MainPlayer player1 = App.content().canvas().getMainPlayer();
+        if (player1.getStats().isDead()) return;
+        player1.setVelocityX(player1.getMoveSpeed());
     }
 
     public void stopMove() {
@@ -206,73 +206,73 @@ public class Backend {
     }
 
     public void playerJump() {
-        MainPlayer p = App.content().canvas().getMainPlayer();
-        if (p.getStats().isDead()) return;
-        p.jump();
+        MainPlayer player1 = App.content().canvas().getMainPlayer();
+        if (player1.getStats().isDead()) return;
+        player1.jump();
     }
 
     // --- Player 2 Control (Multiplayer Mode) ---
 
     public void startMoveLeft_p2() {
-        MainPlayer p2 = App.content().canvas().getMainPlayer2();
-        if (p2 != null && !p2.getStats().isDead()) p2.setVelocityX(-p2.getMoveSpeed());
+        MainPlayer player2 = App.content().canvas().getMainPlayer2();
+        if (player2 != null && !player2.getStats().isDead()) player2.setVelocityX(-player2.getMoveSpeed());
     }
 
     public void startMoveRight_p2() {
-        MainPlayer p2 = App.content().canvas().getMainPlayer2();
-        if (p2 != null && !p2.getStats().isDead()) p2.setVelocityX(p2.getMoveSpeed());
+        MainPlayer player2 = App.content().canvas().getMainPlayer2();
+        if (player2 != null && !player2.getStats().isDead()) player2.setVelocityX(player2.getMoveSpeed());
     }
 
     public void stopMove_p2() {
-        MainPlayer p2 = App.content().canvas().getMainPlayer2();
-        if (p2 != null) p2.setVelocityX(0);
+        MainPlayer player2 = App.content().canvas().getMainPlayer2();
+        if (player2 != null) player2.setVelocityX(0);
     }
 
     public void playerJump_p2() {
-        MainPlayer p2 = App.content().canvas().getMainPlayer2();
-        if (p2 != null && !p2.getStats().isDead()) p2.jump();
+        MainPlayer player2 = App.content().canvas().getMainPlayer2();
+        if (player2 != null && !player2.getStats().isDead()) player2.jump();
     }
 
     public void attackEnemy_p2() {
         if (state != GameState.PLAYING) return;
         Canvas canvas = App.content().canvas();
-        MainPlayer p2 = canvas.getMainPlayer2();
-        if (p2 == null) return;
+        MainPlayer player2 = canvas.getMainPlayer2();
+        if (player2 == null) return;
 
-        if (p2.getStats().isDead()) return;   // שחקן שנפל לא תוקף
+        if (player2.getStats().isDead()) return;   // שחקן שנפל לא תוקף
 
-        if (!p2.getStats().hasEnergy(p2.getActiveAttack().getMpCost())) {
-            uiPort().log("[P2] Not enough MP for " + p2.getActiveAttackName());
+        if (!player2.getStats().hasEnergy(player2.getActiveAttack().getMpCost())) {
+            uiPort().log("[P2] Not enough MP for " + player2.getActiveAttackName());
             return;
         }
 
-        if (p2.isOnAttackCooldown()) return;  // עדיין ב-cooldown — אין תקיפה ואין אנימציה
+        if (player2.isOnAttackCooldown()) return;  // עדיין ב-cooldown — אין תקיפה ואין אנימציה
 
-        p2.startAttackAnimation(p2.getActiveAttackName());
+        player2.startAttackAnimation(player2.getActiveAttackName());
 
         if (canvas.getSelectedGameMode() == GameMode.PVP) {
             MainPlayer player1 = canvas.getMainPlayer();
-            if (!player1.getStats().isDead() && p2.useActiveAttack(player1)) {
+            if (!player1.getStats().isDead() && player2.useActiveAttack(player1)) {
                 uiPort().log("[P2] Hit Player 1 | HP: "
                         + (int) player1.getStats().getHealth() + " / "
                         + (int) player1.getStats().getMaxHealth());
             }
-            uiPort().updatePlayer2Position(p2.getX(), p2.getY());
+            uiPort().updatePlayer2Position(player2.getX(), player2.getY());
             return;
         }
 
         // Co-op: שחקנים לא פוגעים זה בזה — רק באויבים
         for (Enemy enemy : canvas.getEnemies()) {
-            if (p2.useActiveAttack(enemy)) {
+            if (player2.useActiveAttack(enemy)) {
                 uiPort().log("[P2] Attacked " + enemy.getDisplayName() + " | HP: " +
                         (int) enemy.getStats().getHealth() + " / " +
                         (int) enemy.getStats().getMaxHealth());
-                uiPort().updatePlayer2Position(p2.getX(), p2.getY());
+                uiPort().updatePlayer2Position(player2.getX(), player2.getY());
                 return;
             }
         }
 
-        uiPort().updatePlayer2Position(p2.getX(), p2.getY());
+        uiPort().updatePlayer2Position(player2.getX(), player2.getY());
     }
 
     public void attackOrThrow_p2() {
@@ -280,18 +280,18 @@ public class Backend {
     }
 
     public void switchAttack_p2(int index) {
-        MainPlayer p2 = App.content().canvas().getMainPlayer2();
-        if (p2 != null) {
-            p2.setActiveAttack(index);
-            uiPort().log("[P2] Active attack: " + p2.getActiveAttackName());
+        MainPlayer player2 = App.content().canvas().getMainPlayer2();
+        if (player2 != null) {
+            player2.setActiveAttack(index);
+            uiPort().log("[P2] Active attack: " + player2.getActiveAttackName());
         }
     }
 
     public void cycleAttack_p2() {
-        MainPlayer p2 = App.content().canvas().getMainPlayer2();
-        if (p2 != null) {
-            p2.selectNextAttack();
-            uiPort().log("[P2] Active attack: " + p2.getActiveAttackName());
+        MainPlayer player2 = App.content().canvas().getMainPlayer2();
+        if (player2 != null) {
+            player2.selectNextAttack();
+            uiPort().log("[P2] Active attack: " + player2.getActiveAttackName());
         }
     }
 
@@ -306,9 +306,9 @@ public class Backend {
         Sword sword = canvas.getSword();
 
         if (sword != null && sword.isOnGround()) {
-            double dist = Math.sqrt(Math.pow(player2.getX() - sword.getX(), 2) +
+            double distanceToSword = Math.sqrt(Math.pow(player2.getX() - sword.getX(), 2) +
                                     Math.pow(player2.getY() - sword.getY(), 2));
-            if (dist <= MainPlayer.PICKUP_RANGE) {
+            if (distanceToSword <= MainPlayer.PICKUP_RANGE) {
                 player2.pickupSword(sword);
                 uiPort().log("[P2] Picked up: " + sword.getName() + " | STR now: " + player2.getStats().getStrength());
                 uiPort().updatePlayer2Position(player2.getX(), player2.getY());
@@ -316,13 +316,13 @@ public class Backend {
             }
         }
 
-        for (Sword s : canvas.getExtraSwords()) {
-            if (!s.isOnGround()) continue;
-            double dist = Math.sqrt(Math.pow(player2.getX() - s.getX(), 2) +
-                                    Math.pow(player2.getY() - s.getY(), 2));
-            if (dist <= MainPlayer.PICKUP_RANGE) {
-                player2.pickupSword(s);
-                uiPort().log("[P2] Picked up: " + s.getName() + " | STR now: " + player2.getStats().getStrength());
+        for (Sword nearbySword : canvas.getExtraSwords()) {
+            if (!nearbySword.isOnGround()) continue;
+            double distanceToSword = Math.sqrt(Math.pow(player2.getX() - nearbySword.getX(), 2) +
+                                    Math.pow(player2.getY() - nearbySword.getY(), 2));
+            if (distanceToSword <= MainPlayer.PICKUP_RANGE) {
+                player2.pickupSword(nearbySword);
+                uiPort().log("[P2] Picked up: " + nearbySword.getName() + " | STR now: " + player2.getStats().getStrength());
                 uiPort().updatePlayer2Position(player2.getX(), player2.getY());
                 return;
             }
@@ -352,9 +352,9 @@ public class Backend {
         Sword sword = canvas.getSword();
 
         if (sword != null && sword.isOnGround()) {
-            double dist = Math.sqrt(Math.pow(player.getX() - sword.getX(), 2) +
+            double distanceToSword = Math.sqrt(Math.pow(player.getX() - sword.getX(), 2) +
                                     Math.pow(player.getY() - sword.getY(), 2));
-            if (dist <= MainPlayer.PICKUP_RANGE) {
+            if (distanceToSword <= MainPlayer.PICKUP_RANGE) {
                 player.pickupSword(sword);
                 uiPort().log("Picked up: " + sword.getName() + " | STR now: " + player.getStats().getStrength());
                 uiPort().updatePlayerPosition(player.getX(), player.getY());
@@ -363,13 +363,13 @@ public class Backend {
         }
 
         // בדיקת חפצים נוספים (טיפות Boss וכו')
-        for (Sword s : canvas.getExtraSwords()) {
-            if (!s.isOnGround()) continue;
-            double dist = Math.sqrt(Math.pow(player.getX() - s.getX(), 2) +
-                                    Math.pow(player.getY() - s.getY(), 2));
-            if (dist <= MainPlayer.PICKUP_RANGE) {
-                player.pickupSword(s);
-                uiPort().log("Picked up: " + s.getName() + " | STR now: " + player.getStats().getStrength());
+        for (Sword nearbySword : canvas.getExtraSwords()) {
+            if (!nearbySword.isOnGround()) continue;
+            double distanceToSword = Math.sqrt(Math.pow(player.getX() - nearbySword.getX(), 2) +
+                                    Math.pow(player.getY() - nearbySword.getY(), 2));
+            if (distanceToSword <= MainPlayer.PICKUP_RANGE) {
+                player.pickupSword(nearbySword);
+                uiPort().log("Picked up: " + nearbySword.getName() + " | STR now: " + player.getStats().getStrength());
                 uiPort().updatePlayerPosition(player.getX(), player.getY());
                 return;
             }
@@ -472,12 +472,12 @@ public class Backend {
     // החלת שדרוג נבחר (מוציא נקודת שדרוג אחת מהמאגר)
     public void applyUpgrade(int index) {
         if (state != GameState.UPGRADE || pendingUpgrades <= 0) return;
-        PlayerStats s = App.content().canvas().getMainPlayer().getStats();
+        PlayerStats playerStats = App.content().canvas().getMainPlayer().getStats();
         switch (index) {
-            case 0: s.increaseMaxHealth(20);            break;  // +20 HP מקסימלי
-            case 1: s.increaseMaxEnergy(10);            break;  // +10 MP מקסימלי
-            case 2: s.setStrength(s.getStrength() + 3); break;  // +3 כוח
-            case 3: s.setAgility(s.getAgility() + 3);   break;  // +3 זריזות (מהירות ו-cooldown)
+            case 0: playerStats.increaseMaxHealth(20);            break;  // +20 HP מקסימלי
+            case 1: playerStats.increaseMaxEnergy(10);            break;  // +10 MP מקסימלי
+            case 2: playerStats.setStrength(playerStats.getStrength() + 3); break;  // +3 כוח
+            case 3: playerStats.setAgility(playerStats.getAgility() + 3);   break;  // +3 זריזות (מהירות ו-cooldown)
             default: return;
         }
         pendingUpgrades--;
@@ -546,11 +546,11 @@ public class Backend {
             uiPort().log("Not enough coins for " + armor.name + " (need " + armor.price + ")");
             return;
         }
-        PlayerStats s = player.getStats();
-        s.increaseMaxHealth(armor.hpBonus);
-        s.increaseMaxEnergy(armor.mpBonus);
-        s.setStrength(s.getStrength() + armor.strBonus);
-        s.increaseDefense(armor.defBonus);
+        PlayerStats playerStats = player.getStats();
+        playerStats.increaseMaxHealth(armor.hpBonus);
+        playerStats.increaseMaxEnergy(armor.mpBonus);
+        playerStats.setStrength(playerStats.getStrength() + armor.strBonus);
+        playerStats.increaseDefense(armor.defBonus);
         state = GameState.PLAYING;
         uiPort().log("Equipped " + armor.name + " (+HP+" + armor.hpBonus + " DEF+" + armor.defBonus + ")");
         refreshPlayer();
@@ -559,23 +559,23 @@ public class Backend {
     // בחירת מפה לפי אינדקס מהתפריט — טלפורט תוך שמירת התקדמות
     public void selectMap(int index) {
         if (state != GameState.MAP_SELECT) return;
-        MapType[] all = MapType.values();
-        if (index < 0 || index >= all.length) return;
+        MapType[] allMaps = MapType.values();
+        if (index < 0 || index >= allMaps.length) return;
         if (!isMapUnlocked(index)) {
-            uiPort().log("Map locked: clear " + all[index - 1].displayName + " first.");
+            uiPort().log("Map locked: clear " + allMaps[index - 1].displayName + " first.");
             return;
         }
         Canvas canvas = App.content().canvas();
-        canvas.loadMap(all[index]);
+        canvas.loadMap(allMaps[index]);
         state = GameState.PLAYING;
         uiPort().setMap(canvas.getMap());
         uiPort().setMainPlayer(canvas.getMainPlayer());
-        uiPort().log("Teleported to map: " + all[index].displayName);
+        uiPort().log("Teleported to map: " + allMaps[index].displayName);
     }
 
     private void refreshPlayer() {
-        MainPlayer p = App.content().canvas().getMainPlayer();
-        uiPort().updatePlayerPosition(p.getX(), p.getY());
+        MainPlayer player1 = App.content().canvas().getMainPlayer();
+        uiPort().updatePlayerPosition(player1.getX(), player1.getY());
     }
 
     // --- עדכון תקופתי (נקרא מ-MyPeriodicLoop כל tick) ---
@@ -680,18 +680,18 @@ public class Backend {
 
     // ריספאון — שומר על MAX_ENEMIES אויבים על המפה (בBoss Arena — מקסימום 1)
     private void handleRespawn(Canvas canvas) {
-        int limit = (canvas.getCurrentMap() == MapType.BOSS_ARENA) ? 1 : MAX_ENEMIES;
-        if (canvas.getEnemies().size() >= limit) {
+        int enemyLimit = (canvas.getCurrentMap() == MapType.BOSS_ARENA) ? 1 : MAX_ENEMIES;
+        if (canvas.getEnemies().size() >= enemyLimit) {
             respawnTimer = RESPAWN_DELAY_TICKS;
             return;
         }
         if (--respawnTimer <= 0) {
-            EnemyType[] pool = canvas.getCurrentMap().enemyTypes;   // אויבים לפי המפה הנוכחית
-            EnemyType type = pool[(int) (Math.random() * pool.length)];
+            EnemyType[] enemySpawnPool = canvas.getCurrentMap().enemyTypes;   // אויבים לפי המפה הנוכחית
+            EnemyType enemyType = enemySpawnPool[(int) (Math.random() * enemySpawnPool.length)];
             double x = 200 + Math.random() * 800;   // מיקום אקראי על המפה
-            canvas.spawnEnemy(nextEnemyId++, x, 430, type);
+            canvas.spawnEnemy(nextEnemyId++, x, 430, enemyType);
             respawnTimer = RESPAWN_DELAY_TICKS;
-            uiPort().log("Respawned " + type.displayName);
+            uiPort().log("Respawned " + enemyType.displayName);
         }
     }
 
@@ -745,12 +745,12 @@ public class Backend {
 
     // הFINAL BOSS מוריד חמישה נשקים אגדיים על הקרקע
     private void dropBossLoot(Canvas canvas, Enemy boss) {
-        double bx = boss.getX(), by = boss.getY();
-        canvas.addExtraSword(new Sword("Soul Sever",   120, bx - 300, by));
-        canvas.addExtraSword(new Sword("Chaos Blade",  110, bx - 150, by));
-        canvas.addExtraSword(new Sword("Wraith Edge",  100, bx,       by));
-        canvas.addExtraSword(new Sword("Bone Crusher",  95, bx + 150, by));
-        canvas.addExtraSword(new Sword("Eternal Lance", 90, bx + 300, by));
+        double bossX = boss.getX(), bossY = boss.getY();
+        canvas.addExtraSword(new Sword("Soul Sever",   120, bossX - 300, bossY));
+        canvas.addExtraSword(new Sword("Chaos Blade",  110, bossX - 150, bossY));
+        canvas.addExtraSword(new Sword("Wraith Edge",  100, bossX,       bossY));
+        canvas.addExtraSword(new Sword("Bone Crusher",  95, bossX + 150, bossY));
+        canvas.addExtraSword(new Sword("Eternal Lance", 90, bossX + 300, bossY));
         uiPort().log("BOSS DEFEATED! 5 legendary weapons dropped — press N to pick up!");
     }
 

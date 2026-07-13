@@ -6,13 +6,13 @@ public class Enemy extends Character {
     public static final double ATTACK_RANGE = 55;          // טווח מגע לתקיפת השחקן
     public static final int ATTACK_COOLDOWN_TICKS = 30;    // ~0.9 שניות בין מכה למכה
 
-    private final EnemyType type;
+    private final EnemyType enemyType;
     private int deathAnimationTicks = 0;
     private int attackCooldown = 0;
 
-    public Enemy(int id, double x, double y, EnemyType type) {
-        super(id, x, y, new PlayerStats(type.maxHealth, type.maxEnergy, type.strength, type.agility));
-        this.type = type;
+    public Enemy(int id, double x, double y, EnemyType enemyType) {
+        super(id, x, y, new PlayerStats(enemyType.maxHealth, enemyType.maxEnergy, enemyType.strength, enemyType.agility));
+        this.enemyType = enemyType;
     }
     
     public void updateAi(MainPlayer player) {
@@ -20,21 +20,21 @@ public class Enemy extends Character {
             velocityX = 0;
             return;
         }
-        double dx = player.getX() - x;
-        if (Math.abs(dx) > 40) {
+        double horizontalDistanceToPlayer = player.getX() - x;
+        if (Math.abs(horizontalDistanceToPlayer) > 40) {
             // המהירות נגזרת מסוג האויב
-            velocityX = (dx > 0) ? type.speed : -type.speed;
-            facingRight = (dx > 0);
+            velocityX = (horizontalDistanceToPlayer > 0) ? enemyType.speed : -enemyType.speed;
+            facingRight = (horizontalDistanceToPlayer > 0);
         } else {
             velocityX = 0;
         }
     }
 
-    public boolean canAttack(MainPlayer player, double range) {
+    public boolean canAttack(MainPlayer player, double attackRange) {
         if (isDying() || attackCooldown > 0) return false;   // לא תוקף בזמן cooldown / גסיסה
-        double dist = Math.sqrt(Math.pow(x - player.getX(), 2) +
+        double distanceToPlayer = Math.sqrt(Math.pow(x - player.getX(), 2) +
                                 Math.pow(y - player.getY(), 2));
-        return dist <= range;
+        return distanceToPlayer <= attackRange;
     }
 
     // תוקף את השחקן — מוריד חיים לפי הכוח, ומפעיל cooldown
@@ -61,8 +61,8 @@ public class Enemy extends Character {
         if (deathAnimationTicks > 0) deathAnimationTicks--;
     }
 
-    public EnemyType getType()     { return type; }
-    public String getDisplayName() { return type.displayName; }
+    public EnemyType getType()     { return enemyType; }
+    public String getDisplayName() { return enemyType.displayName; }
     public boolean isDying() { return stats.isDead() && deathAnimationTicks > 0; }
     public boolean shouldDisappear() { return stats.isDead() && deathAnimationTicks <= 0; }
     public int getDeathAnimationTicks() { return deathAnimationTicks; }
