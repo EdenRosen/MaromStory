@@ -2,6 +2,9 @@ package ai.ui;
 
 import java.awt.Color;
 
+/**
+ * Stores circle drawing data for simple user interface shapes
+ */
 public class Circle {
     public int cx, cy, radius;
     public boolean isBlinking;

@@ -1,10 +1,13 @@
 package team.model;
 
+
+
+
+
+
+
 /**
- * התקדמות השחקן — מטבעות (כסף), נקודות ניסיון (XP) ורמה (Level).
- * מופרד מ-PlayerStats כדי שמחלקה אחת תטפל בנושא אחד:
- *   PlayerStats   = תכונות קרב (HP/MP/STR/AGI)
- *   PlayerProgress = כלכלה והתקדמות
+ * Tracks level experience coins and level growth
  */
 public class PlayerProgress {
 
@@ -21,7 +24,7 @@ public class PlayerProgress {
         xp = 0;
     }
 
-    // כמות ה-XP הדרושה למעבר לרמה הבאה — גדלה עם הרמה
+
     public int getXpToNext() { return level * 100; }
 
     public void addCoins(int amount) {
@@ -34,10 +37,10 @@ public class PlayerProgress {
         return true;
     }
 
-    /**
-     * מוסיף XP ומקדם רמות לפי הצורך.
-     * @return מספר הרמות שעלו (0 אם לא עלתה רמה).
-     */
+
+
+
+
     public int addXp(int amount) {
         if (amount <= 0) return 0;
         xp += amount;

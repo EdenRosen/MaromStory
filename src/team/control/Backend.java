@@ -15,11 +15,14 @@ import team.model.PlayerStats;
 import team.model.ShopItem;
 import team.model.Sword;
 
+/**
+ * Coordinates game setup combat menus progression and periodic updates
+ */
 public class Backend {
 
-    private static final double MP_REGEN_PER_TICK = 0.05;  // ~1.67 MP לשנייה (30ms tick)
-    private static final int MAX_ENEMIES         = 3;      // כמות האויבים שנשמרת על המפה
-    private static final int RESPAWN_DELAY_TICKS = 90;     // ~2.7 שניות בין ריספאונים
+    private static final double MP_REGEN_PER_TICK = 0.05;
+    private static final int MAX_ENEMIES         = 3;
+    private static final int RESPAWN_DELAY_TICKS = 90;
 
     private static final int SOLO_ENEMIES_TO_CLEAR_STAGE = 20;
     private static final int MULTIPLAYER_ENEMIES_TO_CLEAR_STAGE = 30;
@@ -27,9 +30,9 @@ public class Backend {
 
     private GameState state = GameState.GAME_MODE_SELECT;
     private int respawnTimer    = RESPAWN_DELAY_TICKS;
-    private int nextEnemyId     = 100;                     // מזהים ייחודיים לאויבי ריספאון
-    private int pendingUpgrades = 0;                       // שדרוגי רמה שממתינים לבחירת השחקן
-    private int shopPage        = 0;                       // 0=weapons, 1=armor
+    private int nextEnemyId     = 100;
+    private int pendingUpgrades = 0;
+    private int shopPage        = 0;
 
     private int pvpWinner = 0;
     private int highestUnlockedMapIndex = 0;
@@ -39,6 +42,7 @@ public class Backend {
         return UiPort.getInstance();
     }
 
+    // Exposes the current screen state to routers and views
     public GameState getState()    { return state; }
     public boolean isGameStarted() { return state == GameState.PLAYING; }
     public boolean isGameOver()    { return state == GameState.GAME_OVER; }
@@ -52,9 +56,10 @@ public class Backend {
         return index >= 0 && index <= highestUnlockedMapIndex;
     }
 
-    // --- אתחול ---
 
-    // נקרא אוטומטית בעליית האפליקציה — מכין את הנתונים בלבד, לא מתחיל משחק
+
+
+    // Prepares the initial canvas and sends it to the user interface
     public void initializeApp() {
         Canvas canvas = App.content().canvas();
         uiPort().setMap(canvas.getMap());
@@ -62,7 +67,8 @@ public class Backend {
         uiPort().log("App initialized — waiting for player to press Enter");
     }
 
-    // זרימת ההקמה: מצב משחק → P1 → (P2 אם נדרש) → (מפת PvP אם נדרש) → משחק
+
+    // Advances the setup flow from mode selection through hero selection into play
     public void startScenario() {
         if (state == GameState.GAME_OVER) {
             state = GameState.GAME_MODE_SELECT;
@@ -98,9 +104,10 @@ public class Backend {
             }
             return;
         }
-        if (state == GameState.PLAYING) return;  // בעוד המשחק רץ — אל תעשה כלום
+        if (state == GameState.PLAYING) return;
     }
 
+    // Starts an adventure game and resets stage progression
     private void startAdventureMatch() {
         Canvas canvas = App.content().canvas();
         canvas.setCurrentMap(MapType.MEADOW);
@@ -116,15 +123,16 @@ public class Backend {
         uiPort().log("Adventure started on Meadow.");
     }
 
-    // החלפת טאב בחנות — TAB מחליף בין נשק לשריון
+
     public void cycleShopPage() {
         if (state != GameState.SHOP) return;
         shopPage = 1 - shopPage;
         refreshPlayer();
     }
 
-    // בחירת גיבור — פעיל רק במסך הפתיחה. מחליף את הסוג ובונה מחדש כדי
-    // שמסך הפתיחה יציג את הגיבור הנבחר ואת הסקילים שלו.
+
+
+    // Cycles the selected hero for the active hero selection screen
     public void cycleHero() {
         Canvas canvas = App.content().canvas();
         HeroType[] allHeroes = HeroType.values();
@@ -139,7 +147,7 @@ public class Backend {
         }
     }
 
-    // בחירת מצב משחק
+
     public void cycleGameMode() {
         if (state != GameState.GAME_MODE_SELECT) return;
         Canvas canvas = App.content().canvas();
@@ -149,6 +157,7 @@ public class Backend {
         uiPort().log("Game mode selected: " + next);
     }
 
+    // Starts a duel on the selected arena
     private void startPvpMatch(int mapIndex) {
         if (state != GameState.PVP_MAP_SELECT) return;
         MapType[] maps = MapType.values();
@@ -186,7 +195,7 @@ public class Backend {
         uiPort().setMainPlayer2(canvas.getMainPlayer2());
     }
 
-    // --- פקודות תנועה (מגיעות מ-Router בלבד, אין כאן שום ידיעה על מקשים) ---
+
 
     public void startMoveLeft() {
         MainPlayer player1 = App.content().canvas().getMainPlayer();
@@ -211,7 +220,7 @@ public class Backend {
         player1.jump();
     }
 
-    // --- Player 2 Control (Multiplayer Mode) ---
+
 
     public void startMoveLeft_p2() {
         MainPlayer player2 = App.content().canvas().getMainPlayer2();
@@ -233,20 +242,21 @@ public class Backend {
         if (player2 != null && !player2.getStats().isDead()) player2.jump();
     }
 
+    // Handles player two attack logic for cooperative and duel modes
     public void attackEnemy_p2() {
         if (state != GameState.PLAYING) return;
         Canvas canvas = App.content().canvas();
         MainPlayer player2 = canvas.getMainPlayer2();
         if (player2 == null) return;
 
-        if (player2.getStats().isDead()) return;   // שחקן שנפל לא תוקף
+        if (player2.getStats().isDead()) return;
 
         if (!player2.getStats().hasEnergy(player2.getActiveAttack().getMpCost())) {
             uiPort().log("[P2] Not enough MP for " + player2.getActiveAttackName());
             return;
         }
 
-        if (player2.isOnAttackCooldown()) return;  // עדיין ב-cooldown — אין תקיפה ואין אנימציה
+        if (player2.isOnAttackCooldown()) return;
 
         player2.startAttackAnimation(player2.getActiveAttackName());
 
@@ -261,7 +271,7 @@ public class Backend {
             return;
         }
 
-        // Co-op: שחקנים לא פוגעים זה בזה — רק באויבים
+
         for (Enemy enemy : canvas.getEnemies()) {
             if (player2.useActiveAttack(enemy)) {
                 uiPort().log("[P2] Attacked " + enemy.getDisplayName() + " | HP: " +
@@ -295,6 +305,7 @@ public class Backend {
         }
     }
 
+    // Attempts to pick up the closest sword for player two
     public void attemptPickup_p2() {
         Canvas canvas = App.content().canvas();
         MainPlayer player2 = canvas.getMainPlayer2();
@@ -338,9 +349,10 @@ public class Backend {
         uiPort().updatePlayer2Position(player2.getX(), player2.getY());
     }
 
-    // --- הרמה וזריקה של חרב לפי Sequence Diagram ---
 
-    // checkItemAvailability + updateInventoryData (שלבים 3-4 בתרשים)
+
+
+    // Attempts to pick up the closest sword for player one
     public void attemptPickup() {
         Canvas canvas = App.content().canvas();
         MainPlayer player = canvas.getMainPlayer();
@@ -362,7 +374,7 @@ public class Backend {
             }
         }
 
-        // בדיקת חפצים נוספים (טיפות Boss וכו')
+
         for (Sword nearbySword : canvas.getExtraSwords()) {
             if (!nearbySword.isOnGround()) continue;
             double distanceToSword = Math.sqrt(Math.pow(player.getX() - nearbySword.getX(), 2) +
@@ -385,20 +397,21 @@ public class Backend {
         uiPort().updatePlayerPosition(player.getX(), player.getY());
     }
 
+    // Handles player one attack logic for enemies and duel targets
     public void attackEnemy() {
-        if (state != GameState.PLAYING) return;   // אין תקיפה במסך שדרוג / Game Over
+        if (state != GameState.PLAYING) return;
         Canvas canvas = App.content().canvas();
         MainPlayer player = canvas.getMainPlayer();
 
-        if (player.getStats().isDead()) return;   // שחקן שנפל לא תוקף
+        if (player.getStats().isDead()) return;
 
-        // אם אין מספיק MP לסקיל הפעיל — אין תקיפה וגם אין אנימציה
+
         if (!player.getStats().hasEnergy(player.getActiveAttack().getMpCost())) {
             uiPort().log("Not enough MP for " + player.getActiveAttackName());
             return;
         }
 
-        if (player.isOnAttackCooldown()) return;  // עדיין ב-cooldown — אין תקיפה ואין אנימציה
+        if (player.isOnAttackCooldown()) return;
 
         player.startAttackAnimation(player.getActiveAttackName());
 
@@ -414,7 +427,7 @@ public class Backend {
             return;
         }
 
-        // Co-op: שחקנים לא פוגעים זה בזה — רק באויבים
+
         for (Enemy enemy : canvas.getEnemies()) {
             if (player.useActiveAttack(enemy)) {
                 uiPort().log("Attacked " + enemy.getDisplayName() + " | HP: " +
@@ -444,7 +457,8 @@ public class Backend {
         uiPort().log("Active attack: " + player.getActiveAttackName());
     }
 
-    // מקשי המספרים — תלוי-מצב: בחירת מפה / בחירת שדרוג / חנות / החלפת סקיל
+
+    // Routes number input according to the current screen
     public void onNumberKey(int index) {
         switch (state) {
             case MAP_SELECT: selectMap(index);    break;
@@ -456,8 +470,9 @@ public class Backend {
         }
     }
 
-    // --- פאנל שדרוג נקודות (נפתח/נסגר ב-C) ---
 
+
+    // Opens or closes the upgrade menu while preserving player state
     public void toggleUpgradePanel() {
         if (App.content().canvas().getSelectedGameMode() == GameMode.PVP) return;
         if (state == GameState.PLAYING) {
@@ -469,15 +484,16 @@ public class Backend {
         refreshPlayer();
     }
 
-    // החלת שדרוג נבחר (מוציא נקודת שדרוג אחת מהמאגר)
+
+    // Applies one selected stat upgrade to player one
     public void applyUpgrade(int index) {
         if (state != GameState.UPGRADE || pendingUpgrades <= 0) return;
         PlayerStats playerStats = App.content().canvas().getMainPlayer().getStats();
         switch (index) {
-            case 0: playerStats.increaseMaxHealth(20);            break;  // +20 HP מקסימלי
-            case 1: playerStats.increaseMaxEnergy(10);            break;  // +10 MP מקסימלי
-            case 2: playerStats.setStrength(playerStats.getStrength() + 3); break;  // +3 כוח
-            case 3: playerStats.setAgility(playerStats.getAgility() + 3);   break;  // +3 זריזות (מהירות ו-cooldown)
+            case 0: playerStats.increaseMaxHealth(20);            break;
+            case 1: playerStats.increaseMaxEnergy(10);            break;
+            case 2: playerStats.setStrength(playerStats.getStrength() + 3); break;
+            case 3: playerStats.setAgility(playerStats.getAgility() + 3);   break;
             default: return;
         }
         pendingUpgrades--;
@@ -485,8 +501,9 @@ public class Backend {
         refreshPlayer();
     }
 
-    // --- תפריט בחירת מפה (נפתח/נסגר ב-M) ---
 
+
+    // Opens or closes map selection during adventure modes
     public void toggleMapSelect() {
         if (App.content().canvas().getSelectedGameMode() == GameMode.PVP) return;
         if (state == GameState.PLAYING) {
@@ -498,8 +515,9 @@ public class Backend {
         refreshPlayer();
     }
 
-    // --- חנות (נפתחת/נסגרת ב-B) ---
 
+
+    // Opens or closes the shop menu during adventure modes
     public void toggleShop() {
         if (App.content().canvas().getSelectedGameMode() == GameMode.PVP) return;
         if (state == GameState.PLAYING) {
@@ -512,7 +530,8 @@ public class Backend {
         refreshPlayer();
     }
 
-    // קניית פריט לפי אינדקס — מנכה מטבעות, שם חרב על הקרקע ליד השחקן
+
+    // Buys a shop item from the active shop page
     public void buyItem(int index) {
         if (state != GameState.SHOP) return;
         if (shopPage == 0) buyWeapon(index);
@@ -556,7 +575,8 @@ public class Backend {
         refreshPlayer();
     }
 
-    // בחירת מפה לפי אינדקס מהתפריט — טלפורט תוך שמירת התקדמות
+
+    // Moves the player to an unlocked map while keeping progress
     public void selectMap(int index) {
         if (state != GameState.MAP_SELECT) return;
         MapType[] allMaps = MapType.values();
@@ -578,22 +598,23 @@ public class Backend {
         uiPort().updatePlayerPosition(player1.getX(), player1.getY());
     }
 
-    // --- עדכון תקופתי (נקרא מ-MyPeriodicLoop כל tick) ---
 
+
+    // Updates physics attacks enemies resources and game ending rules
     public void updatePlayer() {
-        // קופא במסך הפתיחה וב-Game Over — אין פיזיקה / AI
+
         if (state != GameState.PLAYING) return;
 
         Canvas canvas = App.content().canvas();
         MainPlayer player1 = canvas.getMainPlayer();
         MainPlayer player2 = canvas.getMainPlayer2();
 
-        // עדכון Player 1 — שחקן שנפל לא זז (מונע "החלקת גופה")
+
         if (player1.getStats().isDead()) player1.setVelocityX(0);
         player1.update(canvas.getMap().getRectangles());
         player1.updateAttackAnimation();
 
-        // עדכון Player 2 (אם קיים במצב Multiplayer)
+
         if (player2 != null) {
             if (player2.getStats().isDead()) player2.setVelocityX(0);
             player2.update(canvas.getMap().getRectangles());
@@ -605,13 +626,13 @@ public class Backend {
             handleRespawn(canvas);
         }
 
-        // US-5 — התחדשות MP הדרגתית בכל tick (עד למקסימום)
+
         player1.getStats().restoreEnergy(MP_REGEN_PER_TICK);
         if (player2 != null) {
             player2.getStats().restoreEnergy(MP_REGEN_PER_TICK);
         }
 
-        // US-2 — Game Over: ב-Solo כשהשחקן מת; ב-Co-op רק כששני השחקנים נפלו
+
         boolean p1Dead = player1.getStats().isDead();
         boolean p2Dead = player2 != null && player2.getStats().isDead();
 
@@ -634,6 +655,7 @@ public class Backend {
         }
     }
 
+    // Updates enemy movement target selection attacks and removal
     private void updateEnemies(Canvas canvas) {
         MainPlayer player1 = canvas.getMainPlayer();
         MainPlayer player2 = canvas.getMainPlayer2();
@@ -646,7 +668,7 @@ public class Backend {
             enemy.update(platforms);
             enemy.updateCooldown();
 
-            // US-1 — אויב בטווח מכה את השחקן הקרוב ביותר (עם cooldown בין מכות)
+
             if (target != null && enemy.canAttack(target, Enemy.ATTACK_RANGE)) {
                 enemy.attackPlayer(target);
             }
@@ -659,6 +681,7 @@ public class Backend {
         }
     }
 
+    // Chooses the nearest living player as an enemy target
     private MainPlayer chooseClosestTarget(MainPlayer player1, MainPlayer player2, Enemy enemy) {
         if (player2 == null || player2.getStats().isDead()) {
             return player1;
@@ -678,7 +701,8 @@ public class Backend {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    // ריספאון — שומר על MAX_ENEMIES אויבים על המפה (בBoss Arena — מקסימום 1)
+
+    // Keeps the map populated with enemies based on the current stage
     private void handleRespawn(Canvas canvas) {
         int enemyLimit = (canvas.getCurrentMap() == MapType.BOSS_ARENA) ? 1 : MAX_ENEMIES;
         if (canvas.getEnemies().size() >= enemyLimit) {
@@ -686,16 +710,17 @@ public class Backend {
             return;
         }
         if (--respawnTimer <= 0) {
-            EnemyType[] enemySpawnPool = canvas.getCurrentMap().enemyTypes;   // אויבים לפי המפה הנוכחית
+            EnemyType[] enemySpawnPool = canvas.getCurrentMap().enemyTypes;
             EnemyType enemyType = enemySpawnPool[(int) (Math.random() * enemySpawnPool.length)];
-            double x = 200 + Math.random() * 800;   // מיקום אקראי על המפה
+            double x = 200 + Math.random() * 800;
             canvas.spawnEnemy(nextEnemyId++, x, 430, enemyType);
             respawnTimer = RESPAWN_DELAY_TICKS;
             uiPort().log("Respawned " + enemyType.displayName);
         }
     }
 
-    // תגמול על חיסול אויב — מטבעות ו-XP לפי סוג האויב (אויב חזק = יותר XP)
+
+    // Grants coins experience and boss loot after an enemy disappears
     private void rewardForKill(MainPlayer player, Enemy enemy) {
         player.getProgress().addCoins(enemy.getType().coinReward);
         grantXp(player, enemy.getType().xpReward);
@@ -705,6 +730,7 @@ public class Backend {
         }
     }
 
+    // Records stage clear progress and unlocks the next map
     private void recordStageKill(Canvas canvas) {
         int stageIndex = canvas.getCurrentMap().ordinal();
         if (stageIndex != highestUnlockedMapIndex) return;
@@ -736,6 +762,7 @@ public class Backend {
         }
     }
 
+    // Resets adventure map unlocks and kill counters
     private void resetStageProgression() {
         highestUnlockedMapIndex = 0;
         for (int i = 0; i < stageKills.length; i++) {
@@ -743,7 +770,8 @@ public class Backend {
         }
     }
 
-    // הFINAL BOSS מוריד חמישה נשקים אגדיים על הקרקע
+
+    // Drops legendary swords around the defeated boss
     private void dropBossLoot(Canvas canvas, Enemy boss) {
         double bossX = boss.getX(), bossY = boss.getY();
         canvas.addExtraSword(new Sword("Soul Sever",   120, bossX - 300, bossY));
@@ -754,15 +782,16 @@ public class Backend {
         uiPort().log("BOSS DEFEATED! 5 legendary weapons dropped — press N to pick up!");
     }
 
-    // הוספת XP וטיפול בעליית רמה — צובר נקודות שדרוג (לפתיחה ידנית ב-C)
+
+    // Adds experience and handles level rewards
     private void grantXp(MainPlayer player, int amount) {
         int levelsGained = player.getProgress().addXp(amount);
         if (levelsGained > 0) {
             player.getStats().increaseMaxEnergy(MP_GAIN_PER_LEVEL * levelsGained);
-            // פרס בסיסי: ריפוי מלא + מילוי MP
+
             player.getStats().heal(player.getStats().getMaxHealth());
             player.getStats().restoreEnergy(player.getStats().getMaxEnergy());
-            // צבירת נקודות שדרוג — השחקן פותח את הפאנל ב-C כדי לשפר
+
             pendingUpgrades += levelsGained;
             uiPort().log("LEVEL UP! Level " + player.getProgress().getLevel()
                     + " | Max MP +" + (int) (MP_GAIN_PER_LEVEL * levelsGained)

@@ -16,6 +16,9 @@ import team.model.HeroType;
 import team.model.MapRect;
 import team.model.MapType;
 
+/**
+ * Renders menus world objects players enemies and combat effects
+ */
 public class DrawingPanel extends JPanel {
     private static final String BACKGROUND_IMAGE_ID = "99";
     private static final Image PLAYER_IMAGE = ImageElement.loadImage("resources/Player1.png");
@@ -39,7 +42,7 @@ public class DrawingPanel extends JPanel {
         this.mainRouter  = mainRouter;
 
         setFocusable(true);
-        setFocusTraversalKeysEnabled(false); // כדי ש-TAB יגיע ל-KeyListener (בחירת דמות)
+        setFocusTraversalKeysEnabled(false);
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -64,7 +67,7 @@ public class DrawingPanel extends JPanel {
             public void mousePressed(MouseEvent e) {
                 if (!SwingUtilities.isLeftMouseButton(e)) return;
                 requestFocusInWindow();
-                
+
                 GameState state = App.content().backend().getState();
                 if (state == GameState.HERO_PLAYER1_SELECT
                         || state == GameState.HERO_PLAYER2_SELECT) {
@@ -79,33 +82,34 @@ public class DrawingPanel extends JPanel {
         });
     }
 
+    // Maps keyboard input to router command names
     private String getKeyName(int keyCode) {
         switch (keyCode) {
-            // Player 1 (Arrow Keys)
+
             case KeyEvent.VK_UP:    return "up";
             case KeyEvent.VK_DOWN:  return "down";
             case KeyEvent.VK_LEFT:  return "left";
             case KeyEvent.VK_RIGHT: return "right";
-            
-            // Player 2 (WASD)
+
+
             case KeyEvent.VK_W:     return "up_p2";
             case KeyEvent.VK_A:     return "left_p2";
             case KeyEvent.VK_S:     return "down_p2";
             case KeyEvent.VK_D:     return "right_p2";
-            
-            // Player 1 actions
-            case KeyEvent.VK_SPACE: return "attack";       // P1 attack
-            case KeyEvent.VK_N:     return "pickup";       // P1 pickup
-            case KeyEvent.VK_M:     return "nextAttack";   // P1 change attack style
-            case KeyEvent.VK_T:     return "throw";        // P1 throw sword
-            
-            // Player 2 actions
-            case KeyEvent.VK_R:     return "attack_p2";    // P2 attack
-            case KeyEvent.VK_Q:     return "pickup_p2";    // P2 pickup
-            case KeyEvent.VK_E:     return "nextAttack_p2";// P2 change attack style
-            case KeyEvent.VK_F:     return "throw_p2";     // P2 throw sword
-            
-            // Shared menu controls
+
+
+            case KeyEvent.VK_SPACE: return "attack";
+            case KeyEvent.VK_N:     return "pickup";
+            case KeyEvent.VK_M:     return "nextAttack";
+            case KeyEvent.VK_T:     return "throw";
+
+
+            case KeyEvent.VK_R:     return "attack_p2";
+            case KeyEvent.VK_Q:     return "pickup_p2";
+            case KeyEvent.VK_E:     return "nextAttack_p2";
+            case KeyEvent.VK_F:     return "throw_p2";
+
+
             case KeyEvent.VK_C:     return "upgradePanel";
             case KeyEvent.VK_1:     return "skill1";
             case KeyEvent.VK_2:     return "skill2";
@@ -114,17 +118,18 @@ public class DrawingPanel extends JPanel {
             case KeyEvent.VK_5:     return "skill5";
             case KeyEvent.VK_B:     return "mapSelect";
             case KeyEvent.VK_SLASH: return "shop";
-            
-            // Selection / Navigation
+
+
             case KeyEvent.VK_TAB:   return getTabKeyName();
             case KeyEvent.VK_ENTER: return "start";
-            
+
             default: return null;
         }
     }
-    
+
+    // Chooses the tab action based on the active screen
     private String getTabKeyName() {
-        // TAB behavior depends on state
+
         switch (App.content().backend().getState()) {
             case HERO_PLAYER1_SELECT:
             case HERO_PLAYER2_SELECT:
@@ -138,6 +143,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Draws either setup screens or the active game frame
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -182,7 +188,8 @@ public class DrawingPanel extends JPanel {
         }
     }
 
-    // תווית המפה הנוכחית + רמז למקש M
+
+    // Draws the current map name at the top of the screen
     private void renderMapLabel(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -199,7 +206,8 @@ public class DrawingPanel extends JPanel {
         graphics2D.drawString(label, x, y);
     }
 
-    // פאנל שדרוג נקודות — נפתח ב-C, מקפיא את המשחק ומאפשר להוציא נקודות שדרוג
+
+    // Draws the upgrade menu and available stat choices
     private void renderUpgradePanel(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -236,13 +244,13 @@ public class DrawingPanel extends JPanel {
             graphics2D.setColor(upgradeAccentColors[i]);
             graphics2D.drawRoundRect(x, cardTopY, cardWidth, cardHeight, 18, 18);
 
-            // תג מקש
+
             graphics2D.fillRoundRect(x + cardWidth / 2 - 22, cardTopY + 18, 44, 40, 10, 10);
             graphics2D.setColor(new Color(20, 16, 34));
             graphics2D.setFont(new Font("Arial", Font.BOLD, 26));
             graphics2D.drawString(upgradeKeys[i], x + cardWidth / 2 - graphics2D.getFontMetrics().stringWidth(upgradeKeys[i]) / 2, cardTopY + 47);
 
-            // תיאור השדרוג
+
             graphics2D.setColor(Color.WHITE);
             graphics2D.setFont(new Font("Arial", Font.BOLD, 20));
             graphics2D.drawString(upgradeDescriptions[i], x + cardWidth / 2 - graphics2D.getFontMetrics().stringWidth(upgradeDescriptions[i]) / 2, cardTopY + 95);
@@ -255,7 +263,8 @@ public class DrawingPanel extends JPanel {
         graphics2D.drawString(footerHint, cx - graphics2D.getFontMetrics().stringWidth(footerHint) / 2, cardTopY + cardHeight + 42);
     }
 
-    // תפריט בחירת מפה — נפתח ב-M, מציג את כל המפות לבחירה במספרים
+
+    // Draws map selection cards for adventure and duel setup
     private void renderMapSelect(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -280,7 +289,7 @@ public class DrawingPanel extends JPanel {
         MapType[] maps = MapType.values();
         MapType currentMap = App.content().canvas().getCurrentMap();
         int n = maps.length, gap = 18;
-        int cardWidth = Math.min(230, (w - 80 - gap * (n - 1)) / n);  // מתאים את עצמו לרוחב החלון
+        int cardWidth = Math.min(230, (w - 80 - gap * (n - 1)) / n);
         int cardHeight = 160;
         int totalCardsWidth = n * cardWidth + (n - 1) * gap;
         int firstCardX = cx - totalCardsWidth / 2, cardTopY = h / 2 - 70;
@@ -300,7 +309,7 @@ public class DrawingPanel extends JPanel {
             graphics2D.setColor(accentColor);
             graphics2D.drawRoundRect(x, cardTopY, cardWidth, cardHeight, 20, 20);
 
-            // תג מספר
+
             graphics2D.setColor(accentColor);
             graphics2D.fillOval(x + 14, cardTopY + 11, 30, 30);
             graphics2D.setColor(new Color(18, 14, 30));
@@ -308,7 +317,7 @@ public class DrawingPanel extends JPanel {
             String numberLabel = String.valueOf(i + 1);
             graphics2D.drawString(numberLabel, x + 29 - graphics2D.getFontMetrics().stringWidth(numberLabel) / 2, cardTopY + 32);
 
-            // שם וקונספט
+
             graphics2D.setColor(isUnlocked ? Color.WHITE : new Color(155, 150, 165));
             graphics2D.setFont(new Font("Arial", Font.BOLD, 24));
             graphics2D.drawString(m.displayName, x + 54, cardTopY + 34);
@@ -317,7 +326,7 @@ public class DrawingPanel extends JPanel {
             String mapConceptLabel = isUnlocked ? m.concept : "Clear previous stage";
             graphics2D.drawString(mapConceptLabel, x + 20, cardTopY + 78);
 
-            // עוצמה — נקודות
+
             graphics2D.setColor(new Color(200, 196, 220));
             graphics2D.setFont(new Font("Arial", Font.PLAIN, 14));
             graphics2D.drawString("Power", x + 20, cardTopY + 110);
@@ -356,6 +365,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Draws the shop overlay with weapon and armor tabs
     private void renderShop(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -367,7 +377,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.setPaint(new GradientPaint(0, 0, new Color(60, 45, 0, 35), 0, h, new Color(0, 0, 0, 0)));
         graphics2D.fillRect(0, 0, w, h);
 
-        // כותרת
+
         graphics2D.setFont(new Font("Arial", Font.BOLD, 48));
         String title = "SHOP";
         graphics2D.setColor(new Color(200, 160, 10, 50));
@@ -375,12 +385,12 @@ public class DrawingPanel extends JPanel {
         graphics2D.setColor(new Color(255, 210, 50));
         graphics2D.drawString(title, cx - graphics2D.getFontMetrics().stringWidth(title)/2, 95);
 
-        // יתרת מטבעות
+
         team.model.MainPlayer player = UiPort.getInstance().getMainPlayer();
         int playerCoins = (player != null) ? player.getProgress().getCoins() : 0;
         drawCoinLabel(graphics2D, "Balance:", playerCoins, cx, 130);
 
-        // טאבים
+
         Color[] tabAccents = { new Color(200, 165, 30), new Color(70, 160, 255) };
         String[] tabLabels = { "WEAPONS", "ARMOR" };
         int tabWidth = 155, tabHeight = 34, tabGapWidth = 12;
@@ -401,7 +411,7 @@ public class DrawingPanel extends JPanel {
         int cardTopY = 200, cardHeight = 215;
 
         if (selectedShopPage == 0) {
-            // --- טאב נשק ---
+
             team.model.ShopItem[] items = team.model.ShopItem.values();
             int n = items.length, gap = 14;
             int cardWidth = Math.min(190, (w - 80 - gap * (n - 1)) / n);
@@ -447,7 +457,7 @@ public class DrawingPanel extends JPanel {
             graphics2D.drawString(footerHint, cx - graphics2D.getFontMetrics().stringWidth(footerHint)/2, cardTopY + cardHeight + 34);
 
         } else {
-            // --- טאב שריון ---
+
             team.model.ArmorSet[] sets = team.model.ArmorSet.values();
             int n = sets.length, gap = 14;
             int cardWidth = Math.min(190, (w - 80 - gap * (n - 1)) / n);
@@ -498,7 +508,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
-    // --- עזרי חנות ---
+
 
     private void drawCoinLabel(Graphics2D g, String label, int playerCoins, int cx, int y) {
         g.setFont(new Font("Arial", Font.BOLD, 19));
@@ -538,7 +548,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
-    // מיני-חרב בכרטיס חנות — עיצוב ייחודי לפי שם
+
     private void drawMiniSword(Graphics2D g, String name, int cx, int cy, boolean bright) {
         int a = bright ? 255 : 110;
         switch (name) {
@@ -570,7 +580,7 @@ public class DrawingPanel extends JPanel {
                 g.setColor(new Color(218, 48, 28, a));  g.fillPolygon(new int[]{cx+23,cx+30,cx+23},new int[]{cy-2,cy,cy+3},3);
                 if (bright) { g.setColor(new Color(255,30,10,40)); g.fillRoundRect(cx-8,cy-7,40,13,4,4); }
                 break;
-            default: // Void Reaver
+            default:
                 g.setColor(new Color(48, 18, 75, a));   g.fillRect(cx-24,cy-2,10,5);
                 g.setColor(new Color(125, 58, 195, a)); g.fillRect(cx-14,cy-7,5,14);
                 g.setColor(new Color(33, 13, 58, a));   g.fillRect(cx-9,cy-2,33,5);
@@ -580,7 +590,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
-    // מיני-מגן בכרטיס שריון
+
     private void drawMiniShield(Graphics2D g, String name, int cx, int cy, boolean bright) {
         int a = bright ? 255 : 105;
         Color fillColor, borderColor, shineColor;
@@ -605,15 +615,16 @@ public class DrawingPanel extends JPanel {
         g.drawLine(cx, cy, cx, cy+shieldHeight/2-14);
     }
 
+    // Draws the game over overlay and restart prompt
     private void renderGameOver(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // שכבת כהות חצי-שקופה מעל המשחק
+
         graphics2D.setColor(new Color(0, 0, 0, 175));
         graphics2D.fillRect(0, 0, getWidth(), getHeight());
 
-        // כותרת GAME OVER
+
         graphics2D.setFont(new Font("Arial", Font.BOLD, 72));
         int pvpWinner = App.content().backend().getPvpWinner();
         boolean isPvpMode = App.content().canvas().getSelectedGameMode() == GameMode.PVP;
@@ -625,7 +636,7 @@ public class DrawingPanel extends JPanel {
         int tx = (getWidth() - fontMetrics.stringWidth(title)) / 2;
         graphics2D.drawString(title, tx, getHeight() / 2 - 30);
 
-        // הוראת אתחול
+
         graphics2D.setFont(new Font("Arial", Font.PLAIN, 24));
         graphics2D.setColor(new Color(220, 220, 220));
         String prompt = "Press ENTER or Reset to play again";
@@ -634,8 +645,9 @@ public class DrawingPanel extends JPanel {
         graphics2D.drawString(prompt, px, getHeight() / 2 + 30);
     }
 
-    // ---------- מסך פתיחה / בחירת דמות ----------
 
+
+    // Returns the display name used on hero cards and stat panels
     private String heroName(HeroType h) {
         switch (h) {
             case MAGE: return "MAGE";
@@ -644,6 +656,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Returns the role text used on hero cards
     private String heroRole(HeroType h) {
         switch (h) {
             case MAGE: return "Ranged Spellcaster";
@@ -652,6 +665,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Returns the sprite image for the selected hero type
     private Image heroImage(HeroType h) {
         switch (h) {
             case MAGE: return MAGE_IMAGE;
@@ -660,6 +674,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Returns the accent color for hero selection cards
     private Color heroAccent(HeroType h) {
         switch (h) {
             case MAGE: return new Color(150, 120, 255);
@@ -668,6 +683,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Returns the visible skill list for each hero card
     private String[] heroSkills(HeroType h) {
         switch (h) {
             case MAGE:
@@ -679,6 +695,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Draws the hero selection screen
     private void renderStartScreen(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -691,7 +708,7 @@ public class DrawingPanel extends JPanel {
                 ? App.content().canvas().getSelectedHero2()
                 : App.content().canvas().getSelectedHero();
 
-        // רקע — גרדיאנט אנכי + נצנוצי כוכבים
+
         graphics2D.setPaint(new GradientPaint(0, 0, new Color(18, 12, 34), 0, h, new Color(36, 24, 64)));
         graphics2D.fillRect(0, 0, w, h);
         graphics2D.setColor(new Color(255, 255, 255, 22));
@@ -702,7 +719,7 @@ public class DrawingPanel extends JPanel {
             graphics2D.fillOval(sx, sy, s, s);
         }
 
-        // כותרת עם הילה
+
         graphics2D.setFont(new Font("Arial", Font.BOLD, 60));
         String title = "MaromQuest";
         FontMetrics fontMetrics = graphics2D.getFontMetrics();
@@ -720,7 +737,7 @@ public class DrawingPanel extends JPanel {
                 : "Player 1: Choose your hero";
         graphics2D.drawString(subtitle, (w - graphics2D.getFontMetrics().stringWidth(subtitle)) / 2, ty + 40);
 
-        // Hero cards — supports any number of HeroType values.
+
         HeroType[] heroes = HeroType.values();
         int cardWidth = 230, cardHeight = 330, gap = 50;
         int totalCardsWidth = heroes.length * cardWidth + (heroes.length - 1) * gap;
@@ -732,7 +749,7 @@ public class DrawingPanel extends JPanel {
             renderHeroCard(graphics2D, heroes[i], cx, cardTopY, cardWidth, cardHeight, heroes[i] == currentSelection);
         }
 
-        // כיתובי הוראות
+
         int footY = cardTopY + cardHeight + 55;
         graphics2D.setFont(new Font("Arial", Font.BOLD, 22));
         String go = "ENTER or CLICK  —  Confirm            TAB  —  Switch Hero";
@@ -747,6 +764,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.drawString(controls, (w - graphics2D.getFontMetrics().stringWidth(controls)) / 2, footY + 30);
     }
 
+    // Draws the game mode selection screen
     private void renderGameModeSelect(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -754,7 +772,7 @@ public class DrawingPanel extends JPanel {
 
         int w = getWidth(), h = getHeight();
 
-        // Background — vertical gradient with stars
+
         graphics2D.setPaint(new GradientPaint(0, 0, new Color(18, 12, 34), 0, h, new Color(36, 24, 64)));
         graphics2D.fillRect(0, 0, w, h);
         graphics2D.setColor(new Color(255, 255, 255, 22));
@@ -765,7 +783,7 @@ public class DrawingPanel extends JPanel {
             graphics2D.fillOval(sx, sy, s, s);
         }
 
-        // Title
+
         graphics2D.setFont(new Font("Arial", Font.BOLD, 60));
         String title = "MaromQuest";
         FontMetrics fontMetrics = graphics2D.getFontMetrics();
@@ -781,7 +799,7 @@ public class DrawingPanel extends JPanel {
         String subtitle = "Choose game mode";
         graphics2D.drawString(subtitle, (w - graphics2D.getFontMetrics().stringWidth(subtitle)) / 2, ty + 40);
 
-        // Game mode cards
+
         GameMode selectedMode = App.content().canvas().getSelectedGameMode();
         int cardWidth = 230, cardHeight = 280, gap = 30;
         int totalCardsWidth = 3 * cardWidth + 2 * gap;
@@ -792,7 +810,7 @@ public class DrawingPanel extends JPanel {
         renderModeCard(graphics2D, "MULTIPLAYER", "2 Players", firstCardX + cardWidth + gap, cardTopY, cardWidth, cardHeight, selectedMode == GameMode.MULTIPLAYER);
         renderModeCard(graphics2D, "PVP", "Player vs Player", firstCardX + 2 * (cardWidth + gap), cardTopY, cardWidth, cardHeight, selectedMode == GameMode.PVP);
 
-        // Instructions
+
         int footY = cardTopY + cardHeight + 55;
         graphics2D.setFont(new Font("Arial", Font.BOLD, 22));
         String go = "ENTER or CLICK  —  Start            TAB  —  Switch Mode";
@@ -805,28 +823,29 @@ public class DrawingPanel extends JPanel {
         graphics2D.drawString(info, (w - graphics2D.getFontMetrics().stringWidth(info)) / 2, footY + 35);
     }
 
+    // Draws one selectable game mode card
     private void renderModeCard(Graphics2D graphics2D, String title, String description, int x, int y, int cw, int ch, boolean selected) {
         Color accentColor = new Color(150, 145, 170);
 
-        // Card body
+
         graphics2D.setColor(new Color(28, 22, 46));
         graphics2D.fillRoundRect(x, y, cw, ch, 22, 22);
         graphics2D.setStroke(new BasicStroke(1.5f));
         graphics2D.setColor(new Color(80, 72, 110));
         graphics2D.drawRoundRect(x, y, cw, ch, 22, 22);
 
-        // Title
+
         graphics2D.setFont(new Font("Arial", Font.BOLD, 32));
         graphics2D.setColor(new Color(200, 194, 220));
         FontMetrics fontMetrics = graphics2D.getFontMetrics();
         graphics2D.drawString(title, x + (cw - fontMetrics.stringWidth(title)) / 2, y + 60);
 
-        // Description
+
         graphics2D.setFont(new Font("Arial", Font.ITALIC, 16));
         graphics2D.setColor(accentColor);
         graphics2D.drawString(description, x + (cw - graphics2D.getFontMetrics().stringWidth(description)) / 2, y + 95);
 
-        // Info text
+
         graphics2D.setFont(new Font("Arial", Font.PLAIN, 13));
         graphics2D.setColor(new Color(160, 154, 180));
         String info = title.equals("SOLO") ? "Play alone"
@@ -836,39 +855,40 @@ public class DrawingPanel extends JPanel {
 
     }
 
+    // Draws one selectable hero card
     private void renderHeroCard(Graphics2D graphics2D, HeroType hero, int x, int y, int cw, int ch, boolean selected) {
         Color accentColor = heroAccent(hero);
 
-        // גוף הכרטיס
+
         graphics2D.setColor(new Color(28, 22, 46));
         graphics2D.fillRoundRect(x, y, cw, ch, 22, 22);
         graphics2D.setStroke(new BasicStroke(1.5f));
         graphics2D.setColor(new Color(80, 72, 110));
         graphics2D.drawRoundRect(x, y, cw, ch, 22, 22);
 
-        // שם
+
         graphics2D.setFont(new Font("Arial", Font.BOLD, 28));
         graphics2D.setColor(new Color(200, 194, 220));
         FontMetrics fontMetrics = graphics2D.getFontMetrics();
         graphics2D.drawString(heroName(hero), x + (cw - fontMetrics.stringWidth(heroName(hero))) / 2, y + 38);
 
-        // תפקיד
+
         graphics2D.setFont(new Font("Arial", Font.ITALIC, 15));
         graphics2D.setColor(accentColor);
         String role = heroRole(hero);
         graphics2D.drawString(role, x + (cw - graphics2D.getFontMetrics().stringWidth(role)) / 2, y + 60);
 
-        // ספרייט
+
         Image sprite = heroImage(hero);
         if (isImageLoaded(sprite)) {
             drawImageFit(graphics2D, sprite, x + cw / 2 - 55, y + 72, 110, 130, false);
         }
 
-        // קו מפריד
+
         graphics2D.setColor(new Color(255, 255, 255, 30));
         graphics2D.drawLine(x + 24, y + 212, x + cw - 24, y + 212);
 
-        // סקילים
+
         graphics2D.setFont(new Font("Arial", Font.PLAIN, 15));
         String[] skills = heroSkills(hero);
         for (int i = 0; i < skills.length; i++) {
@@ -877,6 +897,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Draws the active map background
     private void renderBackground(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         MapType map = App.content().canvas().getCurrentMap();
@@ -907,7 +928,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.setRenderingHints(previousRenderingHints);
     }
 
-    // רקע פרוצדורלי לפי קונספט המפה — לכל מפה אווירה אחרת לגמרי
+
     private void drawThemedBackground(Graphics2D graphics2D, MapType map) {
         int w = getWidth(), h = getHeight();
         Color top, bottom;
@@ -964,6 +985,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Draws all registered image elements except the background
     private void renderImages(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         for (Map.Entry<String, ImageElement> entry : images.entrySet()) {
@@ -980,6 +1002,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Draws collision platforms for the active map
     private void renderMap(Graphics g) {
         team.model.Map currentMap = UiPort.getInstance().getMap();
         if (currentMap == null || currentMap.getRectangles() == null) return;
@@ -998,7 +1021,8 @@ public class DrawingPanel extends JPanel {
         }
     }
 
-    // חרב ביד השחקן — מסתובבת עם הכיוון, עיצוב ייחודי לפי שם החרב. מצויר לשני השחקנים
+
+    // Draws swords held by player characters
     private void renderEquippedSword(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -1026,7 +1050,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.setTransform(old);
     }
 
-    // מציירת את צורת החרב כשהיא ביד — ממורכזת ב-(0,0), פונה ימינה
+
     private void drawEquippedSwordShape(Graphics2D g, String name) {
         switch (name) {
             case "Worn Dagger": {
@@ -1176,6 +1200,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Draws available swords on the ground
     private void renderSword(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -1189,7 +1214,7 @@ public class DrawingPanel extends JPanel {
             graphics2D.drawString("[N]", sx + 5, (int) sword.getY() - 4);
         }
 
-        // חפצי Boss ופריטים נוספים על הקרקע
+
         for (team.model.Sword s : my_base.App.content().canvas().getExtraSwords()) {
             if (!s.isOnGround()) continue;
             int sx = (int) s.getX(), sy = (int) s.getY() + 8;
@@ -1200,29 +1225,29 @@ public class DrawingPanel extends JPanel {
         }
     }
 
-    // מציירת חרב על הקרקע לפי שמה — כל חרב עם צורה וצבע ייחודיים
+
     private void drawSwordOnGround(Graphics2D g, String name, int x, int y) {
         Stroke old = g.getStroke();
         switch (name) {
             case "Worn Dagger": {
-                // פגיון קצר וחלוד
+
                 g.setColor(new Color(130, 95, 60));
-                g.fillRect(x, y + 2, 7, 5);            // ידית עץ
+                g.fillRect(x, y + 2, 7, 5);
                 g.setColor(new Color(155, 120, 80));
-                g.fillRect(x + 7, y + 1, 3, 7);        // גארד
+                g.fillRect(x + 7, y + 1, 3, 7);
                 g.setColor(new Color(160, 140, 110));
-                g.fillRect(x + 10, y + 3, 16, 3);      // להב חלוד
+                g.fillRect(x + 10, y + 3, 16, 3);
                 g.setColor(new Color(140, 115, 90));
                 int[] tx = {x+26, x+30, x+26}; int[] ty = {y+3, y+4, y+6};
                 g.fillPolygon(tx, ty, 3);
                 break;
             }
             case "Iron Sword": {
-                // חרב ברזל קלאסית
+
                 g.setColor(new Color(100, 70, 40));
                 g.fillRect(x, y + 2, 10, 6);
                 g.setColor(new Color(80, 80, 90));
-                g.fillRect(x+10, y, 4, 9);             // גארד
+                g.fillRect(x+10, y, 4, 9);
                 g.setColor(new Color(185, 185, 195));
                 g.fillRect(x+14, y+2, 24, 5);
                 g.setColor(new Color(215, 215, 230));
@@ -1231,66 +1256,66 @@ public class DrawingPanel extends JPanel {
                 break;
             }
             case "Silver Blade": {
-                // להב כסף מבריק עם גוון כחלחל
+
                 g.setColor(new Color(110, 80, 50));
                 g.fillRect(x, y+2, 10, 6);
-                g.setColor(new Color(100, 130, 170));   // גארד כחול
+                g.setColor(new Color(100, 130, 170));
                 g.fillRect(x+10, y, 4, 9);
                 g.setColor(new Color(210, 215, 235));
                 g.fillRect(x+14, y+2, 26, 5);
-                // שפיץ קדמי ועורק אמצע
+
                 g.setColor(new Color(180, 210, 255));
-                g.fillRect(x+16, y+3, 22, 2);          // קו אמצע כחלחל
+                g.fillRect(x+16, y+3, 22, 2);
                 g.setColor(new Color(230, 240, 255));
                 int[] tx = {x+40, x+47, x+40}; int[] ty = {y+2, y+4, y+7};
                 g.fillPolygon(tx, ty, 3);
                 break;
             }
             case "Demon Blade": {
-                // להב אדום-שחור מחורץ
+
                 g.setColor(new Color(80, 30, 30));
                 g.fillRect(x, y+2, 10, 6);
                 g.setColor(new Color(120, 20, 20));
-                g.fillRect(x+10, y-1, 5, 11);          // גארד רחב
+                g.fillRect(x+10, y-1, 5, 11);
                 g.setColor(new Color(80, 20, 20));
                 g.fillRect(x+15, y+2, 28, 5);
-                // שיניים
+
                 g.setColor(new Color(180, 30, 20));
                 g.fillRect(x+15, y+1, 28, 2);
                 for (int i = 0; i < 3; i++) {
-                    g.fillRect(x+17+i*8, y-1, 4, 4);   // שיניים על הגב
+                    g.fillRect(x+17+i*8, y-1, 4, 4);
                 }
-                // עצה
+
                 g.setColor(new Color(220, 50, 30));
                 int[] tx = {x+43, x+50, x+43}; int[] ty = {y+2, y+4, y+7};
                 g.fillPolygon(tx, ty, 3);
-                // זוהר אדום
+
                 g.setColor(new Color(255, 30, 10, 50));
                 g.fillRect(x+14, y-2, 38, 13);
                 break;
             }
             case "Void Reaver": {
-                // להב קוסמי בסגול-שחור
+
                 g.setColor(new Color(50, 20, 80));
                 g.fillRect(x, y+2, 10, 6);
-                g.setColor(new Color(130, 60, 200));    // גארד סגול זוהר
+                g.setColor(new Color(130, 60, 200));
                 g.fillRect(x+10, y-2, 5, 13);
                 g.setColor(new Color(35, 15, 60));
                 g.fillRect(x+15, y+2, 32, 5);
-                // קו סגול זוהר
+
                 g.setColor(new Color(190, 120, 255));
                 g.fillRect(x+15, y+3, 32, 2);
-                // עצה
+
                 g.setColor(new Color(200, 140, 255));
                 int[] tx = {x+47, x+55, x+47}; int[] ty = {y+2, y+4, y+7};
                 g.fillPolygon(tx, ty, 3);
-                // הילה
+
                 g.setColor(new Color(160, 80, 255, 55));
                 g.fillRoundRect(x+13, y-3, 44, 15, 6, 6);
                 break;
             }
             case "Soul Sever": {
-                // להב זהב-נשמות עם הילה בוהקת
+
                 g.setColor(new Color(60, 30, 10));
                 g.fillRect(x, y+2, 10, 6);
                 g.setColor(new Color(255, 180, 30));
@@ -1307,7 +1332,7 @@ public class DrawingPanel extends JPanel {
                 break;
             }
             case "Chaos Blade": {
-                // להב אש-כאוס אדום-כתום עם שיניים
+
                 g.setColor(new Color(40, 10, 10));
                 g.fillRect(x, y+2, 10, 6);
                 g.setColor(new Color(200, 80, 20));
@@ -1325,7 +1350,7 @@ public class DrawingPanel extends JPanel {
                 break;
             }
             case "Wraith Edge": {
-                // להב רוח ציאן-לבן שקוף
+
                 g.setColor(new Color(20, 40, 50));
                 g.fillRect(x, y+2, 10, 6);
                 g.setColor(new Color(100, 210, 220));
@@ -1342,7 +1367,7 @@ public class DrawingPanel extends JPanel {
                 break;
             }
             case "Bone Crusher": {
-                // להב עצמות כבד וגס
+
                 g.setColor(new Color(50, 35, 20));
                 g.fillRect(x, y+2, 12, 6);
                 g.setColor(new Color(200, 185, 150));
@@ -1357,7 +1382,7 @@ public class DrawingPanel extends JPanel {
                 break;
             }
             case "Eternal Lance": {
-                // להב ירוק-אמרלד ארוך ויפה
+
                 g.setColor(new Color(20, 50, 20));
                 g.fillRect(x, y+3, 10, 4);
                 g.setColor(new Color(50, 180, 80));
@@ -1404,13 +1429,13 @@ public class DrawingPanel extends JPanel {
             default:            base = ENEMY_HENRY1; tint = null; break;
         }
         if (tint == null) { enemyImgCache.put(type, base); return base; }
-        if (base == null || base.getWidth(this) <= 0) return base;   // הספרייט עוד לא נטען — ננסה שוב
+        if (base == null || base.getWidth(this) <= 0) return base;
         Image tinted = tintImage(base, tint, 0.5f);
         enemyImgCache.put(type, tinted);
         return tinted;
     }
 
-    // יוצר עותק צבוע של ספרייט (להבחנה ויזואלית בין אויבי מפות שונות)
+
     private Image tintImage(Image src, Color tint, float alpha) {
         int w = src.getWidth(this), h = src.getHeight(this);
         if (w <= 0 || h <= 0) return src;
@@ -1441,6 +1466,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Draws enemies and their health bars
     private void renderEnemies(Graphics g) {
         java.util.List<team.model.Enemy> enemies = App.content().canvas().getEnemies();
         if (enemies == null || enemies.isEmpty()) return;
@@ -1449,7 +1475,7 @@ public class DrawingPanel extends JPanel {
 
         for (team.model.Enemy enemy : enemies) {
             Image img = getEnemyImage(enemy.getType());
-            
+
             if (img == null || !isImageLoaded(img)) {
                 img = ENEMY_HENRY1;
             }
@@ -1468,7 +1494,7 @@ public class DrawingPanel extends JPanel {
                 continue;
             }
 
-            // הילה צבעונית לפי קונספט המפה (לאויבים החזקים)
+
             Color aura = enemyAura(type);
             if (aura != null) {
                 int cxp = ex + ew / 2, cyp = ey - eyOff + eh / 2;
@@ -1532,8 +1558,9 @@ public class DrawingPanel extends JPanel {
         graphics2D.drawRect(barX, barY, barWidth, barHeight);
     }
 
+    // Draws the active attack animation for each player
     private void renderAttackAnimation(Graphics g) {
-        // Render Player 1 attack
+
         team.model.MainPlayer player1 = UiPort.getInstance().getMainPlayer();
         if (player1 != null && player1.isAttacking()) {
             String anim = player1.getCurrentAnimation();
@@ -1547,8 +1574,8 @@ public class DrawingPanel extends JPanel {
                 renderBasicAttackAnimation(g, player1);
             }
         }
-        
-        // Render Player 2 attack (if in multiplayer mode)
+
+
         team.model.MainPlayer player2 = UiPort.getInstance().getMainPlayer2();
         if (player2 != null && player2.isAttacking()) {
             String anim = player2.getCurrentAnimation();
@@ -1564,14 +1591,15 @@ public class DrawingPanel extends JPanel {
         }
     }
 
-    // אנימציית כדור-אש — כדור זוהר שטס קדימה עם זנב להבה
+
+    // Draws a moving fireball animation
     private void renderFireballAnimation(Graphics g, team.model.MainPlayer player) {
         Graphics2D graphics2D = (Graphics2D) g;
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int ticks    = player.getAttackAnimationTicks();
         int maxTicks = team.model.MainPlayer.ATTACK_ANIMATION_TICKS;
-        float progress = 1.0f - (float) ticks / maxTicks;   // 0→1 ככל שהאנימציה מתקדמת
+        float progress = 1.0f - (float) ticks / maxTicks;
 
         boolean facingRight = player.isFacingRight();
         int facingDirection   = facingRight ? 1 : -1;
@@ -1580,7 +1608,7 @@ public class DrawingPanel extends JPanel {
         int travelDistance = 160;
         int cx = firstCardX + (int) (facingDirection * progress * travelDistance);
 
-        // זנב להבה (כדורים דועכים לאחור)
+
         for (int i = 5; i >= 1; i--) {
             int tx = cx - facingDirection * i * 11;
             int r  = Math.max(2, 15 - i * 2);
@@ -1589,20 +1617,21 @@ public class DrawingPanel extends JPanel {
             graphics2D.fillOval(tx - r, y - r, r * 2, r * 2);
         }
 
-        // הילה חיצונית
+
         graphics2D.setColor(new Color(255, 120, 30, 150));
         graphics2D.fillOval(cx - 17, y - 17, 34, 34);
-        // טבעת אש
+
         graphics2D.setColor(new Color(255, 80, 20, 200));
         graphics2D.fillOval(cx - 13, y - 13, 26, 26);
-        // ליבה לוהטת
+
         graphics2D.setColor(new Color(255, 232, 150));
         graphics2D.fillOval(cx - 7, y - 7, 14, 14);
         graphics2D.setColor(Color.WHITE);
         graphics2D.fillOval(cx - 3, y - 3, 6, 6);
     }
 
-    // אנימציית AquaBeam — קרן לייזר כחולה רחבה עם הילה ופולסינג
+
+    // Draws a blue beam attack animation
     private void renderAquaBeamAnimation(Graphics g, team.model.MainPlayer player) {
         Graphics2D graphics2D = (Graphics2D) g;
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -1610,18 +1639,18 @@ public class DrawingPanel extends JPanel {
 
         int ticks    = player.getAttackAnimationTicks();
         int maxTicks = team.model.MainPlayer.ATTACK_ANIMATION_TICKS;
-        float progress = 1.0f - (float) ticks / maxTicks;   // 0→1 ככל שהאנימציה מתקדמת
+        float progress = 1.0f - (float) ticks / maxTicks;
 
         boolean facingRight = player.isFacingRight();
         int facingDirection    = facingRight ? 1 : -1;
         int originX = (int) player.getX() + (facingRight ? 46 : 4);
         int originY = (int) player.getY() + 22;
 
-        // הקרן מתארכת בהדרגה לאורך של 320px
+
         int beamLength = (int) (320 * progress);
         int endX = originX + facingDirection * beamLength;
 
-        // שכבות הילה חיצוניות (כחול רחב + שקוף)
+
         int[] widths = { 28, 18, 10, 5, 2 };
         int[] alphas = { 30,  60, 110, 180, 255 };
         Color[] cols = {
@@ -1637,7 +1666,7 @@ public class DrawingPanel extends JPanel {
             graphics2D.drawLine(originX, originY, endX, originY);
         }
 
-        // נצנוצים לאורך הקרן
+
         for (int i = 1; i <= 7; i++) {
             float sparkleProgress = (float) i / 8;
             if (sparkleProgress > progress) break;
@@ -1648,13 +1677,13 @@ public class DrawingPanel extends JPanel {
             graphics2D.fillOval(sx - sparkleSize / 2, originY - sparkleSize / 2, sparkleSize, sparkleSize);
         }
 
-        // נקודת מקור — עיגול אנרגיה ביד הקוסם
+
         graphics2D.setColor(new Color(60, 160, 255, 200));
         graphics2D.fillOval(originX - 9, originY - 9, 18, 18);
         graphics2D.setColor(new Color(200, 240, 255, 230));
         graphics2D.fillOval(originX - 5, originY - 5, 10, 10);
 
-        // פיצוץ בקצה (רק כשהקרן הגיעה לאורך מלא)
+
         if (progress > 0.85f) {
             int impactAlpha = (int) ((progress - 0.85f) / 0.15f * 255);
             graphics2D.setColor(new Color(140, 210, 255, Math.min(255, impactAlpha)));
@@ -1666,6 +1695,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.setStroke(previousStroke);
     }
 
+    // Draws the short basic attack arc
     private void renderBasicAttackAnimation(Graphics g, team.model.MainPlayer player) {
         Graphics2D graphics2D = (Graphics2D) g;
         Stroke previousStroke = graphics2D.getStroke();
@@ -1688,6 +1718,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.setStroke(previousStroke);
     }
 
+    // Draws the sword slash sweep
     private void renderSlashAnimation(Graphics g, team.model.MainPlayer player) {
         Graphics2D graphics2D = (Graphics2D) g;
         Stroke previousStroke = graphics2D.getStroke();
@@ -1698,9 +1729,9 @@ public class DrawingPanel extends JPanel {
 
         int ticks     = player.getAttackAnimationTicks();
         int maxTicks  = team.model.MainPlayer.ATTACK_ANIMATION_TICKS;
-        float progress = 1.0f - (float) ticks / maxTicks; // 0→1 כשהאנימציה מתקדמת
+        float progress = 1.0f - (float) ticks / maxTicks;
 
-        // זווית סיבוב — החרב עוברת 180 מעלות
+
         double baseAngle = player.isFacingRight() ? -Math.PI / 2 : Math.PI / 2;
         double sweep     = player.isFacingRight() ? Math.PI : -Math.PI;
         double angle     = baseAngle + sweep * progress;
@@ -1708,7 +1739,7 @@ public class DrawingPanel extends JPanel {
         int swordLength = 55;
         int alpha = Math.max(60, 255 - (int)(progress * 200));
 
-        // קו החרב המסתובב
+
         graphics2D.translate(px, py);
         graphics2D.rotate(angle);
 
@@ -1716,13 +1747,13 @@ public class DrawingPanel extends JPanel {
         graphics2D.setColor(new Color(200, 220, 255, alpha));
         graphics2D.drawLine(0, 0, swordLength, 0);
 
-        // טיפ זוהר
+
         graphics2D.setColor(new Color(255, 255, 255, alpha));
         graphics2D.fillOval(swordLength - 5, -5, 10, 10);
 
         graphics2D.setTransform(previousTransform);
 
-        // קשת זנב אחרי החרב
+
         int arcSize = swordLength * 2 + 10;
         int arcX = px - arcSize / 2;
         int arcY = py - arcSize / 2;
@@ -1736,6 +1767,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.setStroke(previousStroke);
     }
 
+    // Draws the active skill boxes near the bottom of the screen
     private void renderActiveSkillHUD(Graphics g) {
         Graphics2D graphics2D = (Graphics2D) g;
         team.model.MainPlayer player1 = UiPort.getInstance().getMainPlayer();
@@ -1772,7 +1804,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.drawString(skillName, boxLeftX + 8, boxTopY + 38);
     }
 
-    // צבע נושא לכל סקיל
+
     private Color skillColor(String skillName) {
         if ("Slash Attack".equals(skillName)) return new Color(180, 100, 255);
         if ("Fireball".equals(skillName))     return new Color(255, 140, 50);
@@ -1780,6 +1812,7 @@ public class DrawingPanel extends JPanel {
         return new Color(80, 180, 255);
     }
 
+    // Draws both player sprites and health bars
     private void renderMainPlayer(Graphics g) {
         team.model.MainPlayer player1 = UiPort.getInstance().getMainPlayer();
         if (player1 == null) return;
@@ -1789,7 +1822,7 @@ public class DrawingPanel extends JPanel {
         if (!isImageLoaded(player1Image)) player1Image = PLAYER_IMAGE;
         if (!isImageLoaded(player1Image)) return;
 
-        // Render Player 1
+
         int px1 = (int) player1.getX();
         int py1 = (int) player1.getY();
 
@@ -1801,7 +1834,7 @@ public class DrawingPanel extends JPanel {
 
         renderMainPlayerHealthBar(graphics2D, player1, px1, py1);
 
-        // Render Player 2 (if in multiplayer mode)
+
         team.model.MainPlayer player2 = UiPort.getInstance().getMainPlayer2();
         if (player2 != null) {
             Image player2Image = heroImage(player2.getHeroType());
@@ -1871,6 +1904,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.drawString(String.valueOf((int) stats.getHealth()), barX + 18, barY - 2);
     }
 
+    // Draws the player stat panels and progress bars
     private void renderPlayerStats(Graphics g) {
         team.model.MainPlayer player1 = UiPort.getInstance().getMainPlayer();
         if (player1 == null || player1.getStats() == null) return;
@@ -1881,11 +1915,11 @@ public class DrawingPanel extends JPanel {
         int pendingUpgradePoints = App.content().backend().getPendingUpgrades();
         int panelX = 10, panelY = 10, panelWidth = 190, panelHeight = (pendingUpgradePoints > 0) ? 198 : 168;
 
-        // Render Player 1 stats (left side)
+
         renderPlayerStatsPanel(graphics2D, player1, panelX, panelY, panelWidth, panelHeight,
                 "P1 " + heroName(player1.getHeroType()), pendingUpgradePoints);
 
-        // Render Player 2 stats (right side) if in multiplayer mode
+
         team.model.MainPlayer player2 = UiPort.getInstance().getMainPlayer2();
         if (player2 != null && player2.getStats() != null) {
             int player2PanelX = getWidth() - panelWidth - 10;
@@ -1900,7 +1934,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.setColor(new Color(0, 0, 0, 150));
         graphics2D.fillRoundRect(panelX, panelY, panelWidth, panelHeight, 12, 12);
 
-        // Label (P1 or P2)
+
         graphics2D.setFont(new Font("Arial", Font.BOLD, 12));
         graphics2D.setColor(new Color(200, 190, 220));
         graphics2D.drawString(label, panelX + 10, panelY + 12);
@@ -1924,18 +1958,18 @@ public class DrawingPanel extends JPanel {
             graphics2D.drawString("DEF: " + (int) stats.getDefense(), panelX + 10, panelY + 117);
         }
 
-        // Separator line
+
         graphics2D.setColor(new Color(255, 255, 255, 40));
         graphics2D.drawLine(panelX + 10, panelY + 108, panelX + panelWidth - 10, panelY + 108);
 
-        // Level + Coins
+
         team.model.PlayerProgress playerProgress = player.getProgress();
 
         graphics2D.setFont(new Font("Arial", Font.BOLD, 15));
         graphics2D.setColor(new Color(180, 150, 255));
         graphics2D.drawString("LV " + playerProgress.getLevel(), panelX + 10, panelY + 131);
 
-        // Coin icon + count (right side)
+
         int coinX = panelX + panelWidth - 78, coinY = panelY + 110;
         graphics2D.setColor(new Color(170, 130, 20));
         graphics2D.fillOval(coinX, coinY, 16, 16);
@@ -1948,7 +1982,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.setFont(new Font("Arial", Font.BOLD, 15));
         graphics2D.drawString(String.valueOf(playerProgress.getCoins()), coinX + 22, panelY + 131);
 
-        // XP bar
+
         int barX = panelX + 10, barY = panelY + 143, barWidth = panelWidth - 20, barHeight = 14;
         graphics2D.setColor(new Color(38, 38, 50));
         graphics2D.fillRoundRect(barX, barY, barWidth, barHeight, 7, 7);
@@ -1964,7 +1998,7 @@ public class DrawingPanel extends JPanel {
         graphics2D.setColor(Color.WHITE);
         graphics2D.drawString(xpText, barX + (barWidth - fontMetrics.stringWidth(xpText)) / 2, barY + 11);
 
-        // Upgrade points available — footerHint for opening panel in C
+
         if (pendingUpgradePoints > 0) {
             graphics2D.setColor(new Color(150, 210, 255));
             graphics2D.setFont(new Font("Arial", Font.BOLD, 13));
@@ -1972,29 +2006,30 @@ public class DrawingPanel extends JPanel {
         }
     }
 
-    // Handle mouse clicks on hero cards
+
+    // Handles mouse selection on hero cards
     private void handleHeroCardClick(int mouseX, int mouseY) {
         int w = getWidth(), h = getHeight();
         HeroType[] heroes = HeroType.values();
-        
-        // Calculate card positions (same as renderStartScreen)
+
+
         int cardWidth = 230, cardHeight = 330, gap = 50;
         int totalCardsWidth = heroes.length * cardWidth + (heroes.length - 1) * gap;
         int firstCardX = (w - totalCardsWidth) / 2;
-        int cardTopY = 185;  // From renderStartScreen calculation
-        
+        int cardTopY = 185;
+
         for (int i = 0; i < heroes.length; i++) {
             int cx = firstCardX + i * (cardWidth + gap);
             int cy = cardTopY;
-            
+
             if (mouseX >= cx && mouseX <= cx + cardWidth && mouseY >= cy && mouseY <= cy + cardHeight) {
                 HeroType clickedHero = heroes[i];
                 HeroType currentHero = App.content().backend().getState() == GameState.HERO_PLAYER2_SELECT
                         ? App.content().canvas().getSelectedHero2()
                         : App.content().canvas().getSelectedHero();
-                
+
                 if (clickedHero != currentHero) {
-                    // Cycle until we reach the clicked hero
+
                     int currentHeroIndex = currentHero.ordinal();
                     int targetHeroIndex = clickedHero.ordinal();
                     int heroCyclesToTarget = (targetHeroIndex - currentHeroIndex + heroes.length) % heroes.length;
@@ -2003,7 +2038,7 @@ public class DrawingPanel extends JPanel {
                     }
                     mainRouter.route("/system/key/down", Params.of("start"));
                 } else {
-                    // Clicked on same hero — transition to game mode select
+
                     mainRouter.route("/system/key/down", Params.of("start"));
                 }
                 return;
@@ -2011,7 +2046,8 @@ public class DrawingPanel extends JPanel {
         }
     }
 
-    // Handle mouse clicks on mode cards
+
+    // Handles mouse selection on game mode cards
     private void handleModeCardClick(int mouseX, int mouseY) {
         int w = getWidth();
         int cardWidth = 230, cardHeight = 280, gap = 30;
@@ -2036,6 +2072,7 @@ public class DrawingPanel extends JPanel {
         }
     }
 
+    // Handles mouse selection on duel arena cards
     private void handlePvpMapClick(int mouseX, int mouseY) {
         MapType[] maps = MapType.values();
         int w = getWidth(), h = getHeight(), gap = 18;

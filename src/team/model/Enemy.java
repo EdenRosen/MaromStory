@@ -1,10 +1,13 @@
 package team.model;
 
+/**
+ * Controls enemy movement targeting attacks and death timing
+ */
 public class Enemy extends Character {
 
     public static final int DEATH_ANIMATION_TICKS = 18;
-    public static final double ATTACK_RANGE = 55;          // טווח מגע לתקיפת השחקן
-    public static final int ATTACK_COOLDOWN_TICKS = 30;    // ~0.9 שניות בין מכה למכה
+    public static final double ATTACK_RANGE = 55;
+    public static final int ATTACK_COOLDOWN_TICKS = 30;
 
     private final EnemyType enemyType;
     private int deathAnimationTicks = 0;
@@ -14,7 +17,7 @@ public class Enemy extends Character {
         super(id, x, y, new PlayerStats(enemyType.maxHealth, enemyType.maxEnergy, enemyType.strength, enemyType.agility));
         this.enemyType = enemyType;
     }
-    
+
     public void updateAi(MainPlayer player) {
         if (isDying()) {
             velocityX = 0;
@@ -22,7 +25,7 @@ public class Enemy extends Character {
         }
         double horizontalDistanceToPlayer = player.getX() - x;
         if (Math.abs(horizontalDistanceToPlayer) > 40) {
-            // המהירות נגזרת מסוג האויב
+
             velocityX = (horizontalDistanceToPlayer > 0) ? enemyType.speed : -enemyType.speed;
             facingRight = (horizontalDistanceToPlayer > 0);
         } else {
@@ -31,13 +34,13 @@ public class Enemy extends Character {
     }
 
     public boolean canAttack(MainPlayer player, double attackRange) {
-        if (isDying() || attackCooldown > 0) return false;   // לא תוקף בזמן cooldown / גסיסה
+        if (isDying() || attackCooldown > 0) return false;
         double distanceToPlayer = Math.sqrt(Math.pow(x - player.getX(), 2) +
                                 Math.pow(y - player.getY(), 2));
         return distanceToPlayer <= attackRange;
     }
 
-    // תוקף את השחקן — מוריד חיים לפי הכוח, ומפעיל cooldown
+
     public void attackPlayer(MainPlayer player) {
         double damage = stats.getStrength();
         player.getStats().takeDamage(damage);

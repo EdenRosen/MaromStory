@@ -1,5 +1,8 @@
 package team.model;
 
+/**
+ * Defines the basic melee attack available to every hero
+ */
 public class BasicAttack implements Attacks {
 
     private static final double BASE_DAMAGE = 10;
@@ -35,5 +38,5 @@ public class BasicAttack implements Attacks {
 
         return inFacingDirection && Math.abs(dx) <= MainPlayer.ATTACK_RANGE && dy <= MainPlayer.ATTACK_HEIGHT;
     }
-    
+
 }

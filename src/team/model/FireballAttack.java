@@ -1,8 +1,11 @@
 package team.model;
 
+
+
+
+
 /**
- * סקיל הקוסם — כדור אש מטווח.
- * שלא כמו Slash, אינו דורש חרב (זהו קסם), והטווח שלו ארוך בהרבה.
+ * Defines the ranged fireball attack used by magic heroes
  */
 public class FireballAttack implements Attacks {
 

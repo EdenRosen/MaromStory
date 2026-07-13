@@ -1,5 +1,8 @@
 package team.model;
 
+/**
+ * Lists armor items sold in the shop
+ */
 public enum ArmorSet {
     LEATHER_SET ("Leather Set",   20,  0,  2,  5, 120, "Basic protection"),
     CHAIN_MAIL  ("Chain Mail",    45,  0,  4, 14, 400, "Solid iron links"),

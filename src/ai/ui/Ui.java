@@ -8,6 +8,9 @@ import javax.swing.*;
 import shared.MainRouter;
 import shared.ui_ports.UiPort;
 
+/**
+ * Creates the game window and connects the drawing panel to the router
+ */
 public class Ui {
     private MainRouter mainRouter;
     private Map<String, ImageElement> images = new HashMap<>();
@@ -26,7 +29,7 @@ public class Ui {
         JFrame frame = new JFrame("MaromQuest");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 800);
-        // ממקסם כדי שהחלון יתאים תמיד למסך (מונע חריגה במסכים עם DPI scaling)
+
         frame.setExtendedState(frame.getExtendedState() | JFrame.MAXIMIZED_BOTH);
         frame.setLayout(new BorderLayout());
 

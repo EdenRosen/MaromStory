@@ -3,10 +3,13 @@ package my_base;
 import team.control.Backend;
 import team.model.Canvas;
 
-/*
- * This class should hold the content of the system, i.e., all elements that are
- * related to the essence of the system.
- * 
+
+
+
+
+
+/**
+ * Stores shared application services used across the game
  */
 public class AppContent {
 	private Canvas canvas = new Canvas();
@@ -19,7 +22,7 @@ public class AppContent {
 
 	public Canvas canvas() {
 		return canvas;
-	}	
+	}
 	public Backend backend() {
 		return backend;
 	}

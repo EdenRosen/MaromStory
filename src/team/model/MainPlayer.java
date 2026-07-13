@@ -2,6 +2,9 @@ package team.model;
 
 import java.util.List;
 
+/**
+ * Defines player specific stats movement speed and attack animation state
+ */
 public class MainPlayer extends Character {
 
     public static final double MOVE_SPEED   = 5;
@@ -29,6 +32,7 @@ public class MainPlayer extends Character {
         this.heroType = heroType;
     }
 
+    // Chooses starting health from the selected hero identity
     private static double startingHealth(HeroType heroType) {
         switch (heroType) {
             case DRAGON: return 150;
@@ -37,6 +41,7 @@ public class MainPlayer extends Character {
         }
     }
 
+    // Chooses base movement speed from the selected hero identity
     private static double baseMoveSpeed(HeroType heroType) {
         switch (heroType) {
             case MAGE: return 6.2;
@@ -48,13 +53,13 @@ public class MainPlayer extends Character {
     public PlayerProgress getProgress() { return progress; }
     public HeroType getHeroType() { return heroType; }
 
-    // מהירות תנועה מושפעת מזריזות — כל נקודת AGI מעל הבסיס מוסיפה מעט מהירות
+    // Combines hero base speed with agility growth
     public double getMoveSpeed() {
         return baseMoveSpeed(heroType) + (getStats().getAgility() - 5) * 0.35;
     }
 
-    // --- תנועה --- עם עדכון כיוון
 
+    // Updates movement and facing direction together
     @Override
     public void setVelocityX(double vx) {
         super.setVelocityX(vx);
@@ -62,24 +67,26 @@ public class MainPlayer extends Character {
         if (vx < 0) facingRight = false;
     }
 
-    // --- הרמה וזריקת חרב ---
 
+    // Drops the equipped sword through the shared character logic
     public Sword dropSword() {
         Sword dropped = super.dropSword();
         return dropped;
     }
 
+    // Starts the named attack animation for a short duration
     public void startAttackAnimation(String attackName) {
         attackAnimationTicks = ATTACK_ANIMATION_TICKS;
         currentAnimation = attackName;
     }
 
+    // Advances the active attack animation timer
     public void updateAttackAnimation() {
         if (attackAnimationTicks > 0) attackAnimationTicks--;
     }
 
-    // --- Getters ---
 
+    // Exposes current attack animation state
     public boolean isAttacking() { return attackAnimationTicks > 0; }
     public int getAttackAnimationTicks() { return attackAnimationTicks; }
     public String getCurrentAnimation() { return currentAnimation; }

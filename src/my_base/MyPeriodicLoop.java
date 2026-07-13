@@ -2,6 +2,9 @@ package my_base;
 
 import base.PeriodicLoop;
 
+/**
+ * Updates the game backend on each scheduler tick
+ */
 public class MyPeriodicLoop extends PeriodicLoop {
 
 	private AppContent content = App.content();
@@ -9,7 +12,7 @@ public class MyPeriodicLoop extends PeriodicLoop {
 	@Override
 	public void execute() {
 		super.execute();
-		// עדכון השחקן בכל tick — פיזיקה + ציור
+
 		content.backend().updatePlayer();
 	}
 

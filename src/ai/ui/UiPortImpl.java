@@ -5,18 +5,21 @@ import java.util.HashMap;
 import javax.swing.JPanel;
 import shared.ui_ports.UiPort;
 
+/**
+ * Implements the shared user interface bridge used by the game backend
+ */
 public class UiPortImpl extends UiPort {
     private Map<String, ImageElement> imageElementsById;
     private team.model.Map activeMap;
     private team.model.MainPlayer mainPlayer;
-    private team.model.MainPlayer mainPlayer2;  // P2 in multiplayer mode
+    private team.model.MainPlayer mainPlayer2;
     private JPanel drawingPanel;
 
     public UiPortImpl(Map<String, ImageElement> imageElementsById, team.model.Map activeMap, JPanel drawingPanel) {
         this.imageElementsById = imageElementsById;
         this.activeMap    = activeMap;
         this.drawingPanel  = drawingPanel;
-        this.mainPlayer2 = null;  // Initially null (solo mode)
+        this.mainPlayer2 = null;
     }
 
     @Override

@@ -1,8 +1,11 @@
 package team.model;
 
+
+
+
+
 /**
- * המפות (שלבים) במשחק. לכל מפה קונספט עיצובי שונה, מאגר אויבים תואם,
- * ושם + תיאור קצר להצגה בתפריט בחירת המפות.
+ * Lists maps and their enemy themes
  */
 public enum MapType {
     MEADOW ("Meadow",  "Grassy plains",  EnemyType.SWIFT_HENRY, EnemyType.EVIL_HENRY, EnemyType.GIANT_HENRY),

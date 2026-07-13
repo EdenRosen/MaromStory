@@ -9,6 +9,9 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+/**
+ * Provides simple audio playback support for game sounds
+ */
 public class AudioPlayer {
 
 	public enum MusicStatus{
@@ -19,12 +22,12 @@ public class AudioPlayer {
 	private static Clip clip;
 	private static AudioInputStream audioInputStream;
 	private static MusicStatus status = MusicStatus.STOPPED;
-	
-	
-	/*
-	 * Play a sound file for numIterations times.
-	 * To play in a continuous loop, use numIterations = 0;
-	 */	
+
+
+
+
+
+
 	public static void play(String musicPath, int numIterations) {
 		File musicFile = new File(musicPath);
 		try {
@@ -42,19 +45,19 @@ public class AudioPlayer {
 		clip.start();
 		status = MusicStatus.PLAYING;
 	}
-	
+
 	public static void stop() {
 		clip.stop();
 		status = MusicStatus.STOPPED;
 	}
-	
+
 	public static void close() {
 		clip.close();
 	}
-	
-	
+
+
 	public static MusicStatus getStatus() {
 		return status;
 	}
-	
+
 }

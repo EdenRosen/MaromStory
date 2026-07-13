@@ -1,8 +1,11 @@
 package team.model;
 
+
+
+
+
 /**
- * סקיל קוסם — קרן מים/קרח כחולה שנורית קדימה.
- * נזק גבוה יותר מ-Fireball, עולה יותר MP, טווח ארוך מאוד.
+ * Defines the mage aqua beam attack used in combat
  */
 public class AquaBeamAttack implements Attacks {
 

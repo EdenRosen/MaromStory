@@ -1,5 +1,8 @@
 package base;
 
+/**
+ * Gives model objects a shared numeric identity
+ */
 public abstract class IdentifiedObject {
     private final int id;
 
