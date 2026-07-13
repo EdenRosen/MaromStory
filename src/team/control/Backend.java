@@ -470,6 +470,13 @@ public class Backend {
         }
     }
 
+    // Routes number pad input to player two skill selection
+    public void onPlayerTwoNumberKey(int index) {
+        if (state == GameState.PLAYING) {
+            switchAttack_p2(index);
+        }
+    }
+
 
 
     // Opens or closes the upgrade menu while preserving player state

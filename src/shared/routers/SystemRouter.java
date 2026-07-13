@@ -57,6 +57,11 @@ public class SystemRouter implements SubRouter {
                     case "skill3": backend.onNumberKey(2);     break;
                     case "skill4": backend.onNumberKey(3);     break;
                     case "skill5": backend.onNumberKey(4);     break;
+                    case "skill1_p2": backend.onPlayerTwoNumberKey(0); break;
+                    case "skill2_p2": backend.onPlayerTwoNumberKey(1); break;
+                    case "skill3_p2": backend.onPlayerTwoNumberKey(2); break;
+                    case "skill4_p2": backend.onPlayerTwoNumberKey(3); break;
+                    case "skill5_p2": backend.onPlayerTwoNumberKey(4); break;
 
 
                     case "selectHero":      backend.cycleHero();            break;

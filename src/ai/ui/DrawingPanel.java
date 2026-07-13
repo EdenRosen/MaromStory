@@ -116,6 +116,15 @@ public class DrawingPanel extends JPanel {
             case KeyEvent.VK_3:     return "skill3";
             case KeyEvent.VK_4:     return "skill4";
             case KeyEvent.VK_5:     return "skill5";
+            case KeyEvent.VK_9:     return "skill1_p2";
+            case KeyEvent.VK_8:     return "skill2_p2";
+            case KeyEvent.VK_7:     return "skill3_p2";
+            case KeyEvent.VK_6:     return "skill4_p2";
+            case KeyEvent.VK_NUMPAD1: return "skill1_p2";
+            case KeyEvent.VK_NUMPAD2: return "skill2_p2";
+            case KeyEvent.VK_NUMPAD3: return "skill3_p2";
+            case KeyEvent.VK_NUMPAD4: return "skill4_p2";
+            case KeyEvent.VK_NUMPAD5: return "skill5_p2";
             case KeyEvent.VK_B:     return "mapSelect";
             case KeyEvent.VK_SLASH: return "shop";
 
@@ -1776,11 +1785,14 @@ public class DrawingPanel extends JPanel {
 
         int boxWidth = 170, boxHeight = 50, boxTopY = getHeight() - boxHeight - 15;
         String p1Keys = player1.getHeroType() == HeroType.MAGE ? "[M / 1-3]" : "[M / 1-2]";
+        String p2Keys = player2 != null && player2.getHeroType() == HeroType.MAGE
+                ? "[E / 9-7]"
+                : "[E / 9-8]";
         if (player2 == null) {
             renderSkillBox(graphics2D, player1, "P1", p1Keys, getWidth() - boxWidth - 15, boxTopY, boxWidth, boxHeight);
         } else {
             renderSkillBox(graphics2D, player1, "P1", p1Keys, 15, boxTopY, boxWidth, boxHeight);
-            renderSkillBox(graphics2D, player2, "P2", "[E]", getWidth() - boxWidth - 15, boxTopY, boxWidth, boxHeight);
+            renderSkillBox(graphics2D, player2, "P2", p2Keys, getWidth() - boxWidth - 15, boxTopY, boxWidth, boxHeight);
         }
     }
 
