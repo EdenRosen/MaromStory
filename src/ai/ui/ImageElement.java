@@ -5,6 +5,9 @@ import java.io.File;
 import java.net.URL;
 import javax.swing.ImageIcon;
 
+/**
+ * Loads image assets and stores their current drawing state
+ */
 public class ImageElement {
     public int x, y, width, height;
     public double angle;

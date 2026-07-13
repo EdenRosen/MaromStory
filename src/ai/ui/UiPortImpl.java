@@ -5,50 +5,53 @@ import java.util.HashMap;
 import javax.swing.JPanel;
 import shared.ui_ports.UiPort;
 
+/**
+ * Implements the shared user interface bridge used by the game backend
+ */
 public class UiPortImpl extends UiPort {
-    private Map<String, ImageElement> images;
-    private team.model.Map map;
+    private Map<String, ImageElement> imageElementsById;
+    private team.model.Map activeMap;
     private team.model.MainPlayer mainPlayer;
-    private team.model.MainPlayer mainPlayer2;  // P2 in multiplayer mode
-    private JPanel panel;
+    private team.model.MainPlayer mainPlayer2;
+    private JPanel drawingPanel;
 
-    public UiPortImpl(Map<String, ImageElement> images, team.model.Map map, JPanel panel) {
-        this.images = images;
-        this.map    = map;
-        this.panel  = panel;
-        this.mainPlayer2 = null;  // Initially null (solo mode)
+    public UiPortImpl(Map<String, ImageElement> imageElementsById, team.model.Map activeMap, JPanel drawingPanel) {
+        this.imageElementsById = imageElementsById;
+        this.activeMap    = activeMap;
+        this.drawingPanel  = drawingPanel;
+        this.mainPlayer2 = null;
     }
 
     @Override
-    public void addImage(int imageId, String path, double x, double y, int w, int h, double angle, boolean visible) {
-        images.put(String.valueOf(imageId), new ImageElement(path, (int) x, (int) y, w, h, angle, visible));
-        panel.repaint();
+    public void addImage(int imageId, String path, double x, double y, int width, int height, double angle, boolean visible) {
+        imageElementsById.put(String.valueOf(imageId), new ImageElement(path, (int) x, (int) y, width, height, angle, visible));
+        drawingPanel.repaint();
     }
 
     @Override
-    public void updateImage(int imageId, double x, double y, int w, int h, double angle, boolean visible) {
-        ImageElement image = images.get(String.valueOf(imageId));
+    public void updateImage(int imageId, double x, double y, int width, int height, double angle, boolean visible) {
+        ImageElement image = imageElementsById.get(String.valueOf(imageId));
         if (image != null) {
-            image.update((int) x, (int) y, w, h, angle, visible);
-            panel.repaint();
+            image.update((int) x, (int) y, width, height, angle, visible);
+            drawingPanel.repaint();
         }
     }
 
     @Override
     public void setMap(team.model.Map newMap) {
-        this.map = newMap;
-        panel.repaint();
+        this.activeMap = newMap;
+        drawingPanel.repaint();
     }
 
     @Override
     public team.model.Map getMap() {
-        return this.map;
+        return this.activeMap;
     }
 
     @Override
     public void setMainPlayer(team.model.MainPlayer player) {
         this.mainPlayer = player;
-        panel.repaint();
+        drawingPanel.repaint();
     }
 
     @Override
@@ -61,14 +64,14 @@ public class UiPortImpl extends UiPort {
         if (mainPlayer != null) {
             mainPlayer.setX(x);
             mainPlayer.setY(y);
-            panel.repaint();
+            drawingPanel.repaint();
         }
     }
 
     @Override
     public void setMainPlayer2(team.model.MainPlayer player) {
         this.mainPlayer2 = player;
-        panel.repaint();
+        drawingPanel.repaint();
     }
 
     @Override
@@ -81,7 +84,7 @@ public class UiPortImpl extends UiPort {
         if (mainPlayer2 != null) {
             mainPlayer2.setX(x);
             mainPlayer2.setY(y);
-            panel.repaint();
+            drawingPanel.repaint();
         }
     }
 
@@ -92,9 +95,9 @@ public class UiPortImpl extends UiPort {
 
     @Override
     public void renderInitials() {
-        if (panel instanceof DrawingPanel) {
-            ((DrawingPanel) panel).setGameStarted(true);
+        if (drawingPanel instanceof DrawingPanel) {
+            ((DrawingPanel) drawingPanel).setGameStarted(true);
         }
-        panel.repaint();
+        drawingPanel.repaint();
     }
 }

@@ -1,5 +1,8 @@
 package team.model;
 
+/**
+ * Defines the common contract for every player attack
+ */
 public interface Attacks {
     void executeAttack(Character attacker, Character target);
     String getAttackName();

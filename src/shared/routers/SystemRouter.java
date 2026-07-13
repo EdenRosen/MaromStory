@@ -5,6 +5,9 @@ import base.SubRouter;
 import my_base.App;
 import team.control.Backend;
 
+/**
+ * Translates system routes into backend actions
+ */
 public class SystemRouter implements SubRouter {
 
     private final Backend backend;
@@ -25,21 +28,21 @@ public class SystemRouter implements SubRouter {
                 backend.startScenario();
                 return null;
 
-            // תרגום מקשים לפעולות — Router אחראי על המיפוי, Backend לא יודע כלל על מקשים
+
             case "/key/down": {
                 String key = p.getString(0);
                 switch (key) {
-                    // Player 1 (Arrow Keys + Space)
+
                     case "left":   backend.startMoveLeft();  break;
                     case "right":  backend.startMoveRight(); break;
                     case "up":     backend.playerJump();     break;
-                    
-                    // Player 2 (WASD + Shift)
+
+
                     case "left_p2":   backend.startMoveLeft_p2();  break;
                     case "right_p2":  backend.startMoveRight_p2(); break;
                     case "up_p2":     backend.playerJump_p2();     break;
-                    
-                    // Shared actions
+
+
                     case "pickup": backend.attemptPickup();  break;
                     case "throw":  backend.throwSword();     break;
                     case "pickup_p2": backend.attemptPickup_p2();  break;
@@ -54,8 +57,13 @@ public class SystemRouter implements SubRouter {
                     case "skill3": backend.onNumberKey(2);     break;
                     case "skill4": backend.onNumberKey(3);     break;
                     case "skill5": backend.onNumberKey(4);     break;
-                    
-                    // Selection / Navigation
+                    case "skill1_p2": backend.onPlayerTwoNumberKey(0); break;
+                    case "skill2_p2": backend.onPlayerTwoNumberKey(1); break;
+                    case "skill3_p2": backend.onPlayerTwoNumberKey(2); break;
+                    case "skill4_p2": backend.onPlayerTwoNumberKey(3); break;
+                    case "skill5_p2": backend.onPlayerTwoNumberKey(4); break;
+
+
                     case "selectHero":      backend.cycleHero();            break;
                     case "selectGameMode":  backend.cycleGameMode();        break;
                     case "shopTab":         backend.cycleShopPage();        break;

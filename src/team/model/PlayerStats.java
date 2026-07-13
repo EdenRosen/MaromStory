@@ -1,10 +1,7 @@
 package team.model;
 
 /**
- * תכונות ה-RPG של השחקן.
- * מחולק בכוונה מ-MainPlayer כדי שכל מחלקה תטפל בנושא אחד:
- *   MainPlayer  = מיקום ופיזיקה
- *   PlayerStats = תכונות משחק
+ * Tracks health energy strength agility defense and equipment bonuses
  */
 public class PlayerStats {
 
@@ -12,9 +9,9 @@ public class PlayerStats {
     private double maxHealth;
     private double energy;
     private double maxEnergy;
-    private double strength;   // כוח — משפיע על נזק
-    private double agility;    // זריזות — משפיעה על מהירות וקפיצה
-    private double defense = 0; // הגנה — מפחיתה נזק נכנס
+    private double strength;
+    private double agility;
+    private double defense = 0;
 
     public PlayerStats(double maxHealth, double maxEnergy, double strength, double agility) {
         this.maxHealth = maxHealth;
@@ -25,8 +22,8 @@ public class PlayerStats {
         this.agility   = agility;
     }
 
-    // --- חיים ---
 
+    // Provides health and defense access for combat systems
     public double getHealth()    { return health; }
     public double getMaxHealth() { return maxHealth; }
 
@@ -43,8 +40,8 @@ public class PlayerStats {
 
     public boolean isDead() { return health <= 0; }
 
-    // --- אנרגיה ---
 
+    // Provides energy access for attacks and regeneration
     public double getEnergy()    { return energy; }
     public double getMaxEnergy() { return maxEnergy; }
 
@@ -56,8 +53,8 @@ public class PlayerStats {
         energy = Math.min(maxEnergy, energy + amount);
     }
 
-    // --- שדרוגי רמה (מגדילים את המקסימום ומוסיפים גם לערך הנוכחי) ---
 
+    // Raises maximum resources while keeping current values aligned
     public void increaseMaxHealth(double amount) {
         maxHealth += amount;
         health    += amount;
@@ -70,22 +67,20 @@ public class PlayerStats {
 
     public boolean hasEnergy(double amount) { return energy >= amount; }
 
-    // --- כוח וזריזות ---
 
+    // Provides offensive and mobility attributes
     public double getStrength() { return strength; }
     public double getAgility()  { return agility; }
 
     public void setStrength(double strength) { this.strength = strength; }
     public void setAgility(double agility)   { this.agility  = agility; }
 
-    // --- ציוד ---
-
-    // מצייד חרב — מוסיפה את בונוס הכוח שלה לשחקן
+    // Applies the strength bonus from an equipped sword
     public void equipSword(Sword sword) {
         this.strength += sword.getStrengthBonus();
     }
 
-    // מוריד ציוד חרב — מחזיר את הכוח למצב המקורי
+    // Removes the strength bonus from an unequipped sword
     public void unequipSword(Sword sword) {
         this.strength -= sword.getStrengthBonus();
     }

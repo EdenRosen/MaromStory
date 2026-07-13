@@ -5,20 +5,18 @@ import base.IdentifiedObject;
 import java.util.List;
 
 /**
- * מחלקת בסיס לכל הדמויות במשחק.
- * מכילה את כל הלוגיקה המשותפת בין MainPlayer ל-Enemy:
- * פיזיקה, stats, ונשק.
+ * Provides shared movement combat stats and weapon logic for living objects
  */
 public abstract class Character extends IdentifiedObject {
 
-    // קבועי פיזיקה — משותפים לכל הדמויות
+    // Defines common physics values for every living object
     public static final double JUMP_FORCE   = -13;
     public static final double GRAVITY      = 0.5;
     public static final double SCREEN_RIGHT = 1150;
     public static final int    WIDTH        = 50;
     public static final int    HEIGHT       = 50;
 
-    
+    // Stores movement combat state and the active weapon
     protected double x;
     protected double y;
     protected double velocityX = 0;
@@ -27,8 +25,8 @@ public abstract class Character extends IdentifiedObject {
     protected boolean facingRight = true;
     protected List<Attacks> attacks;
     protected int activeAttackIndex = 0;
-    protected int attackCooldownTicks = 0;            // טיקים שנותרו עד שאפשר לתקוף שוב
-    private static final double TICK_SECONDS = 0.03;  // לולאת המשחק רצה כל 30ms
+    protected int attackCooldownTicks = 0;
+    private static final double TICK_SECONDS = 0.03;
 
     protected final PlayerStats stats;
     protected Sword equippedSword = null;
@@ -42,10 +40,11 @@ public abstract class Character extends IdentifiedObject {
         attacks.add(new BasicAttack());
     }
 
-    // movement
 
+    // Updates horizontal movement intent
     public void setVelocityX(double vx) { this.velocityX = vx; }
 
+    // Starts a jump only when the character is grounded
     public void jump() {
         if (onGround) {
             velocityY = JUMP_FORCE;
@@ -53,10 +52,10 @@ public abstract class Character extends IdentifiedObject {
         }
     }
 
-    // Pyhsics 
 
+    // Applies physics cooldowns gravity platform collision and screen bounds
     public void update(List<MapRect> platforms) {
-        if (attackCooldownTicks > 0) attackCooldownTicks--;   // ספירת cooldown לתקיפה
+        if (attackCooldownTicks > 0) attackCooldownTicks--;
 
         velocityY += GRAVITY;
         x += velocityX;
@@ -75,12 +74,14 @@ public abstract class Character extends IdentifiedObject {
         if (x > SCREEN_RIGHT) x = SCREEN_RIGHT;
     }
 
+    // Checks whether this character landed on a platform this frame
     private boolean landedOn(MapRect rect) {
         boolean overlapX  = (x + WIDTH  > rect.getX()) && (x < rect.getX() + rect.getWidth());
         boolean fromAbove = (y + HEIGHT >= rect.getY()) && (y + HEIGHT <= rect.getY() + rect.getHeight());
         return overlapX && fromAbove && velocityY >= 0;
     }
 
+    // Adds a new attack option to this character
     public void addAttack(Attacks attack) {
         attacks.add(attack);
     }
@@ -88,15 +89,16 @@ public abstract class Character extends IdentifiedObject {
     public Attacks getActiveAttack() {
         return attacks.get(activeAttackIndex);
     }
+    // Tries to execute a specific attack against a target
     public boolean useAttack(int index, Character target) {
         if (index < 0 || index >= attacks.size()) return false;
-        if (attackCooldownTicks > 0) return false;            // עדיין ב-cooldown
+        if (attackCooldownTicks > 0) return false;
         Attacks attack = attacks.get(index);
         if (attack.getMpCost() > stats.getEnergy()) return false;
         if (!attack.canExecute(this, target)) return false;
         attack.executeAttack(this, target);
         stats.useEnergy(attack.getMpCost());
-        // AGI מקצר קולדאון — כל נקודה מעל 5 מוריד 4% (מינימום 40% מהמקור)
+
         double agiReduction = Math.max(0.4, 1.0 - (stats.getAgility() - 5) * 0.04);
         attackCooldownTicks = (int) Math.round(attack.getCooldown() * agiReduction / TICK_SECONDS);
         return true;
@@ -110,6 +112,7 @@ public abstract class Character extends IdentifiedObject {
         if (index >= 0 && index < attacks.size()) activeAttackIndex = index;
     }
 
+    // Moves to the next attack in the available attack list
     public void selectNextAttack() {
         if (!attacks.isEmpty()) {
             activeAttackIndex = (activeAttackIndex + 1) % attacks.size();
@@ -124,14 +127,15 @@ public abstract class Character extends IdentifiedObject {
         return attacks.get(activeAttackIndex).getAttackName();
     }
 
-    // --- נשק ---
 
+    // Equips a sword and applies its stat bonus
     public void pickupSword(Sword sword) {
         equippedSword = sword;
         stats.equipSword(sword);
         sword.setOnGround(false);
     }
 
+    // Drops the equipped sword back into the world
     public Sword dropSword() {
         if (equippedSword == null) return null;
         Sword dropped = equippedSword;
@@ -141,7 +145,7 @@ public abstract class Character extends IdentifiedObject {
         equippedSword = null;
         return dropped;
     }
-    
+
 
     public boolean hasSword()          { return equippedSword != null; }
     public Sword  getEquippedSword()   { return equippedSword; }
@@ -150,8 +154,8 @@ public abstract class Character extends IdentifiedObject {
         stats.takeDamage(damage);
     }
 
-    // --- Getters / Setters ---
 
+    // Exposes position stats and simple state values
     public double getX()          { return x; }
     public double getY()          { return y; }
     public boolean isOnGround()   { return onGround; }

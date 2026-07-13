@@ -2,6 +2,9 @@ package ai.ui;
 
 import java.awt.Color;
 
+/**
+ * Stores point drawing data for simple user interface markers
+ */
 public class Point {
     public int x, y;
     public Color color;

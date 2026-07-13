@@ -1,8 +1,11 @@
 package team.model;
 
+
+
+
+
 /**
- * סקיל הקוסם — כדור אש מטווח.
- * שלא כמו Slash, אינו דורש חרב (זהו קסם), והטווח שלו ארוך בהרבה.
+ * Defines a simple aqua beam attack implementation
  */
 public class AquaBeam implements Attacks {
 

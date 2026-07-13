@@ -1,5 +1,8 @@
 package shared.ui_ports;
 
+/**
+ * Defines the shared bridge between backend logic and user interface rendering
+ */
 public abstract class UiPort {
 
     private static UiPort instance;
