@@ -4,9 +4,8 @@ package team.model;
 
 
 
-/**
- * Defines the ranged fireball attack used by magic heroes
- */
+// Defines the ranged fireball attack used by magic heroes
+
 public class FireballAttack implements Attacks {
 
     private static final double BASE_DAMAGE = 5;

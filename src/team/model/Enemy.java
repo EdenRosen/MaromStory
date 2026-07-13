@@ -1,8 +1,7 @@
 package team.model;
 
-/**
- * Controls enemy movement targeting attacks and death timing
- */
+// Controls enemy movement targeting attacks and death timing
+
 public class Enemy extends Character {
 
     public static final int DEATH_ANIMATION_TICKS = 18;

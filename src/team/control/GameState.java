@@ -1,9 +1,8 @@
 package team.control;
 
 
-/**
- * Lists the screens and play states used by the backend
- */
+// Lists the screens and play states used by the backend
+
 public enum GameState {
     GAME_MODE_SELECT,
     HERO_PLAYER1_SELECT,

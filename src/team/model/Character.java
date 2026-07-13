@@ -1,12 +1,10 @@
 package team.model;
+import base.IdentifiedObject;
 import java.util.ArrayList;
 import java.util.List;
-import base.IdentifiedObject;
-import java.util.List;
 
-/**
- * Provides shared movement combat stats and weapon logic for living objects
- */
+// Provides shared movement combat stats and weapon logic for living objects
+
 public abstract class Character extends IdentifiedObject {
 
     // Defines common physics values for every living object

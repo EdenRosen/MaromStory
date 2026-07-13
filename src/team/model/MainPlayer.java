@@ -1,10 +1,5 @@
 package team.model;
 
-import java.util.List;
-
-/**
- * Defines player specific stats movement speed and attack animation state
- */
 public class MainPlayer extends Character {
 
     public static final double MOVE_SPEED   = 5;

@@ -1,8 +1,7 @@
 package team.model;
 
-/**
- * Lists weapon items sold in the shop
- */
+// Lists weapon items sold in the shop
+
 public enum ShopItem {
     WORN_DAGGER    ("Worn Dagger",      5,   60, "A basic starter blade"),
     IRON_SWORD     ("Iron Sword",      15,  220, "Solid forged iron"),

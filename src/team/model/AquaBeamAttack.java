@@ -4,9 +4,8 @@ package team.model;
 
 
 
-/**
- * Defines the mage aqua beam attack used in combat
- */
+// Defines the mage aqua beam attack used in combat
+
 public class AquaBeamAttack implements Attacks {
 
     private static final double BASE_DAMAGE = 65;

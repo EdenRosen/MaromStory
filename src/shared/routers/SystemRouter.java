@@ -5,9 +5,8 @@ import base.SubRouter;
 import my_base.App;
 import team.control.Backend;
 
-/**
- * Translates system routes into backend actions
- */
+// Translates system routes into backend actions
+
 public class SystemRouter implements SubRouter {
 
     private final Backend backend;
@@ -28,9 +27,10 @@ public class SystemRouter implements SubRouter {
                 backend.startScenario();
                 return null;
 
-
+            // This route is called when the user presses a key down, then the UI calls the backend to perform the action associated with that key, which first goes through the SystemRouter to determine which action to perform
             case "/key/down": {
                 String key = p.getString(0);
+                
                 switch (key) {
 
                     case "left":   backend.startMoveLeft();  break;
@@ -74,6 +74,7 @@ public class SystemRouter implements SubRouter {
                 return null;
             }
 
+            // This route is called when the user releases a key, which stops a player from moving left or right
             case "/key/up": {
                 String key = p.getString(0);
                 switch (key) {

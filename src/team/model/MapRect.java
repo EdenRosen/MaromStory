@@ -2,9 +2,8 @@ package team.model;
 
 import base.IdentifiedObject;
 
-/**
- * Stores one rectangle used for map collision
- */
+// Stores one rectangle used for map collision
+
 public class MapRect extends IdentifiedObject {
     private double x;
     private double y;

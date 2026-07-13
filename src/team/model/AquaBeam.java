@@ -4,9 +4,8 @@ package team.model;
 
 
 
-/**
- * Defines a simple aqua beam attack implementation
- */
+// Defines a simple aqua beam attack implementation
+
 public class AquaBeam implements Attacks {
 
     private static final double BASE_DAMAGE = 100;

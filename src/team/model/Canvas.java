@@ -3,9 +3,8 @@ package team.model;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Builds the current map players enemies weapons and selected mode
- */
+// Builds the current map players enemies weapons and selected mode
+
 public class Canvas {
 
     private Map map;

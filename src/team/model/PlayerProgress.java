@@ -6,9 +6,8 @@ package team.model;
 
 
 
-/**
- * Tracks level experience coins and level growth
- */
+// Tracks level experience coins and level growth
+
 public class PlayerProgress {
 
     private int coins = 0;

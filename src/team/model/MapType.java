@@ -4,9 +4,8 @@ package team.model;
 
 
 
-/**
- * Lists maps and their enemy themes
- */
+// Lists maps and their enemy themes
+
 public enum MapType {
     MEADOW ("Meadow",  "Grassy plains",  EnemyType.SWIFT_HENRY, EnemyType.EVIL_HENRY, EnemyType.GIANT_HENRY),
     INFERNO("Inferno", "Hellfire wastes", EnemyType.INFERNO_HENRY, EnemyType.DOOM_HENRY),

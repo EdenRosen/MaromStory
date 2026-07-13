@@ -1,8 +1,7 @@
 package team.model;
 
-/**
- * Stores a sword item and its world position
- */
+// Stores a sword item and its world position
+
 public class Sword {
 
     private String name;

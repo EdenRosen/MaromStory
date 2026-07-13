@@ -1,8 +1,7 @@
 package team.model;
 
-/**
- * Tracks health energy strength agility defense and equipment bonuses
- */
+// Tracks health energy strength agility defense and equipment bonuses
+
 public class PlayerStats {
 
     private double health;

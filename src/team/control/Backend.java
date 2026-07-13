@@ -15,9 +15,8 @@ import team.model.PlayerStats;
 import team.model.ShopItem;
 import team.model.Sword;
 
-/**
- * Coordinates game setup combat menus progression and periodic updates
- */
+// Backend logic for the game
+
 public class Backend {
 
     private static final double MP_REGEN_PER_TICK = 0.05;

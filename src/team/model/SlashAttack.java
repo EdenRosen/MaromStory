@@ -1,8 +1,7 @@
 package team.model;
 
-/**
- * Defines the warrior sword slash attack
- */
+// Defines the warrior sword slash attack
+
 public class SlashAttack implements Attacks{
     private static final double BASE_DAMAGE = 20;
     private static final double COOLDOWN    = 1.0;

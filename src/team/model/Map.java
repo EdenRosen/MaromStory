@@ -4,9 +4,8 @@ import base.IdentifiedObject;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Stores the collision rectangles for one playable map
- */
+// Stores the collision rectangles for one playable map
+
 public class Map extends IdentifiedObject {
     private List<MapRect> rectangles;
 
