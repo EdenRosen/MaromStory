@@ -641,8 +641,8 @@ public class DrawingPanel extends JPanel {
     private Color  heroAccent(HeroType h){ return h == HeroType.MAGE ? new Color(150, 120, 255) : new Color(255, 165, 60); }
     private String[] heroSkills(HeroType h) {
         return h == HeroType.MAGE
-            ? new String[]{ "1  Basic Attack", "2  Fireball  (ranged magic, 3 MP)", "3  AquaBeam  (high dmg, 70 MP)" }
-            : new String[]{ "1  Basic Attack", "2  Slash  (needs a sword)" };
+            ? new String[]{ "1  Basic Attack  (5 MP)", "2  Fireball  (ranged magic, 3 MP)", "3  AquaBeam  (high dmg, 70 MP)" }
+            : new String[]{ "1  Basic Attack  (5 MP)", "2  Slash  (needs a sword)" };
     }
 
     private void renderStartScreen(Graphics g) {

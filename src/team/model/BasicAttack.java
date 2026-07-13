@@ -4,6 +4,7 @@ public class BasicAttack implements Attacks {
 
     private static final double BASE_DAMAGE = 10;
     private static final double COOLDOWN    = 0.5;
+    private static final double MP_COST     = 5.0;
 
     @Override
     public void executeAttack(Character attacker, Character target) {
@@ -21,7 +22,7 @@ public class BasicAttack implements Attacks {
     public double getCooldown() { return COOLDOWN; }
 
     @Override
-    public double getMpCost() { return 1.0; }
+    public double getMpCost() { return MP_COST; }
 
 
     @Override
