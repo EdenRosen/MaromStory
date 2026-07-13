@@ -64,6 +64,9 @@ public class Canvas {
                 player.addAttack(new FireballAttack());
                 player.addAttack(new AquaBeamAttack());
                 break;
+            case DRAGON:
+                player.addAttack(new DragonFireballAttack());
+                break;
         }
     }
 

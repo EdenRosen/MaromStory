@@ -22,11 +22,27 @@ public class MainPlayer extends Character {
 
     public MainPlayer(int id, double x, double y, HeroType heroType) {
         super(id, x, y, new PlayerStats(
-                heroType == HeroType.WARRIOR ? 120 : 100,
+                startingHealth(heroType),
                 50,
                 10,
                 5));
         this.heroType = heroType;
+    }
+
+    private static double startingHealth(HeroType heroType) {
+        switch (heroType) {
+            case DRAGON: return 150;
+            case WARRIOR: return 120;
+            default: return 100;
+        }
+    }
+
+    private static double baseMoveSpeed(HeroType heroType) {
+        switch (heroType) {
+            case MAGE: return 6.2;
+            case DRAGON: return 3.8;
+            default: return MOVE_SPEED;
+        }
     }
 
     public PlayerProgress getProgress() { return progress; }
@@ -34,7 +50,7 @@ public class MainPlayer extends Character {
 
     // מהירות תנועה מושפעת מזריזות — כל נקודת AGI מעל הבסיס מוסיפה מעט מהירות
     public double getMoveSpeed() {
-        return MOVE_SPEED + (getStats().getAgility() - 5) * 0.35;
+        return baseMoveSpeed(heroType) + (getStats().getAgility() - 5) * 0.35;
     }
 
     // --- תנועה --- עם עדכון כיוון

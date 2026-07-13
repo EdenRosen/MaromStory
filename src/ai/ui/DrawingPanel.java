@@ -23,6 +23,7 @@ public class DrawingPanel extends JPanel {
     private static final Image ENEMY_HENRY2 = ImageElement.loadImage("resources/EnemyHenry2.png");
     private static final Image ENEMY_HENRY3 = ImageElement.loadImage("resources/EnemyHenry3.png");
     private static final Image MAGE_IMAGE   = ImageElement.loadImage("resources/Mage.png");
+    private static final Image DRAGON_IMAGE = ImageElement.loadImage("resources/Dragon.png");
 
     private Map<String, ImageElement> images;
     private MainRouter mainRouter;
@@ -635,14 +636,47 @@ public class DrawingPanel extends JPanel {
 
     // ---------- מסך פתיחה / בחירת דמות ----------
 
-    private String heroName(HeroType h)  { return h == HeroType.MAGE ? "MAGE" : "WARRIOR"; }
-    private String heroRole(HeroType h)  { return h == HeroType.MAGE ? "Ranged Spellcaster" : "Melee Fighter"; }
-    private Image  heroImage(HeroType h) { return h == HeroType.MAGE ? MAGE_IMAGE : PLAYER_IMAGE; }
-    private Color  heroAccent(HeroType h){ return h == HeroType.MAGE ? new Color(150, 120, 255) : new Color(255, 165, 60); }
+    private String heroName(HeroType h) {
+        switch (h) {
+            case MAGE: return "MAGE";
+            case DRAGON: return "DRAGON";
+            default: return "WARRIOR";
+        }
+    }
+
+    private String heroRole(HeroType h) {
+        switch (h) {
+            case MAGE: return "Ranged Spellcaster";
+            case DRAGON: return "Slow Tough Dragon";
+            default: return "Melee Fighter";
+        }
+    }
+
+    private Image heroImage(HeroType h) {
+        switch (h) {
+            case MAGE: return MAGE_IMAGE;
+            case DRAGON: return DRAGON_IMAGE;
+            default: return PLAYER_IMAGE;
+        }
+    }
+
+    private Color heroAccent(HeroType h) {
+        switch (h) {
+            case MAGE: return new Color(150, 120, 255);
+            case DRAGON: return new Color(85, 210, 115);
+            default: return new Color(255, 165, 60);
+        }
+    }
+
     private String[] heroSkills(HeroType h) {
-        return h == HeroType.MAGE
-            ? new String[]{ "1  Basic Attack  (5 MP)", "2  Fireball  (ranged magic, 3 MP)", "3  AquaBeam  (high dmg, 70 MP)" }
-            : new String[]{ "1  Basic Attack  (5 MP)", "2  Slash  (needs a sword)" };
+        switch (h) {
+            case MAGE:
+                return new String[]{ "1  Basic Attack  (2 MP)", "2  Fireball  (ranged magic, 3 MP)", "3  AquaBeam  (high dmg, 70 MP)" };
+            case DRAGON:
+                return new String[]{ "1  Basic Attack  (2 MP)", "2  Fireball  (small dragon, 2 MP)" };
+            default:
+                return new String[]{ "1  Basic Attack  (2 MP)", "2  Slash  (needs a sword)" };
+        }
     }
 
     private void renderStartScreen(Graphics g) {
@@ -686,7 +720,7 @@ public class DrawingPanel extends JPanel {
                 : "Player 1: Choose your hero";
         graphics2D.drawString(subtitle, (w - graphics2D.getFontMetrics().stringWidth(subtitle)) / 2, ty + 40);
 
-        // שני כרטיסים — הקוסם גבוה יותר (3 סקילים)
+        // Hero cards — supports any number of HeroType values.
         HeroType[] heroes = HeroType.values();
         int cardWidth = 230, cardHeight = 330, gap = 50;
         int totalCardsWidth = heroes.length * cardWidth + (heroes.length - 1) * gap;
